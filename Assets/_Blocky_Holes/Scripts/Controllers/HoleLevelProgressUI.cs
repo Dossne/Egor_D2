@@ -12,7 +12,7 @@ namespace ClawbearGames
         [SerializeField] private Vector2 screenOffset = Vector2.zero;
         [SerializeField][Min(0f)] private float holeRadiusOffsetMultiplier = 1.1f;
         [SerializeField][Min(0f)] private float edgePadding = 8f;
-        [SerializeField][Min(0f)] private float holeGap = 16f;
+        [SerializeField][Min(0f)] private float holeGap = 24f;
         [SerializeField][Min(0f)] private float rootTopClearance = 54f;
         [SerializeField] private Vector2 rootSize = new Vector2(420f, 122f);
         [SerializeField] private Sprite progressFillSprite = null;
@@ -176,7 +176,7 @@ namespace ClawbearGames
             fillMask.offsetMax = new Vector2(-8f, -5f);
             Image fillMaskImage = fillMask.GetComponent<Image>();
             fillMaskImage.sprite = GetWhiteSprite();
-            fillMaskImage.color = Color.black;
+            fillMaskImage.color = Color.clear;
             fillMaskImage.raycastTarget = false;
 
             fillRect = CreateImage("ProgressFill", fillMask, Color.white, progressFillSprite);

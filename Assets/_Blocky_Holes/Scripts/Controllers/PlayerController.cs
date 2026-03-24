@@ -30,6 +30,7 @@ namespace ClawbearGames
         [SerializeField] private Sprite progressFrameSprite = null;
         [SerializeField] private Sprite progressFillSprite = null;
         [SerializeField] private PlayerComboController comboController = null;
+        [SerializeField][Range(0.1f, 1f)] private float holeCenterFillScale = 0.68f;
         [Header("Joystick")]
         [SerializeField] private CanvasGroup joystickCanvasGroup = null;
         [SerializeField] private RectTransform joystickRoot = null;
@@ -82,6 +83,7 @@ namespace ClawbearGames
         private int currentBalanceLevelIndex = -1;
         private readonly List<Text> pointsPopupPool = new List<Text>();
         [SerializeField] private Vector3 pointsPopupWorldOffset = new Vector3(0f, 0.6f, 0f);
+        private static Sprite holeCenterFillSprite = null;
 
         private void OnEnable()
         {
@@ -167,6 +169,7 @@ namespace ClawbearGames
             // Preserve the character hole sprite colors (e.g. blue ring skins) instead of forcing black tint.
             holeSpriteRenderer.color = Color.white;
             DisableIdleHoleEffects();
+            EnsureHoleCenterFill();
             EnsureHoleCenterIsBlack();
 
             //Setup parameters and objects
@@ -616,6 +619,78 @@ namespace ClawbearGames
                 bodyLocalPos.y = -0.02f;
                 holeBody.localPosition = bodyLocalPos;
             }
+        }
+
+        private void EnsureHoleCenterFill()
+        {
+            if (holeSpriteRenderer == null)
+            {
+                return;
+            }
+
+            const string fillObjectName = "HoleCenterFill";
+            Transform holeSpriteTransform = holeSpriteRenderer.transform;
+            Transform fillTransform = holeSpriteTransform.Find(fillObjectName);
+            SpriteRenderer fillRenderer = null;
+            if (fillTransform == null)
+            {
+                GameObject fillObject = new GameObject(fillObjectName);
+                fillTransform = fillObject.transform;
+                fillTransform.SetParent(holeSpriteTransform, false);
+                fillRenderer = fillObject.AddComponent<SpriteRenderer>();
+            }
+            else
+            {
+                fillRenderer = fillTransform.GetComponent<SpriteRenderer>();
+                if (fillRenderer == null)
+                {
+                    fillRenderer = fillTransform.gameObject.AddComponent<SpriteRenderer>();
+                }
+            }
+
+            fillTransform.localPosition = new Vector3(0f, 0f, 0.001f);
+            fillTransform.localRotation = Quaternion.identity;
+            fillTransform.localScale = Vector3.one * Mathf.Clamp01(holeCenterFillScale);
+
+            fillRenderer.sprite = GetOrCreateHoleCenterFillSprite();
+            fillRenderer.color = Color.black;
+            fillRenderer.sortingLayerID = holeSpriteRenderer.sortingLayerID;
+            fillRenderer.sortingOrder = holeSpriteRenderer.sortingOrder - 1;
+            fillRenderer.maskInteraction = SpriteMaskInteraction.None;
+            fillRenderer.receiveShadows = false;
+        }
+
+        private static Sprite GetOrCreateHoleCenterFillSprite()
+        {
+            if (holeCenterFillSprite != null)
+            {
+                return holeCenterFillSprite;
+            }
+
+            const int textureSize = 256;
+            Texture2D texture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false);
+            texture.name = "HoleCenterFillTexture";
+            texture.filterMode = FilterMode.Bilinear;
+            texture.wrapMode = TextureWrapMode.Clamp;
+
+            float radius = (textureSize - 2) * 0.5f;
+            Vector2 center = new Vector2((textureSize - 1) * 0.5f, (textureSize - 1) * 0.5f);
+            Color clear = new Color(1f, 1f, 1f, 0f);
+            Color opaque = new Color(1f, 1f, 1f, 1f);
+
+            for (int y = 0; y < textureSize; y++)
+            {
+                for (int x = 0; x < textureSize; x++)
+                {
+                    float distance = Vector2.Distance(new Vector2(x, y), center);
+                    texture.SetPixel(x, y, distance <= radius ? opaque : clear);
+                }
+            }
+
+            texture.Apply(false, true);
+            holeCenterFillSprite = Sprite.Create(texture, new Rect(0f, 0f, textureSize, textureSize), new Vector2(0.5f, 0.5f), 100f);
+            holeCenterFillSprite.name = "HoleCenterFillSprite";
+            return holeCenterFillSprite;
         }
 
         private void DisableIdleHoleEffects()
