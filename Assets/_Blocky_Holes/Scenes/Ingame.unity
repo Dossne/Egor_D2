@@ -5664,6 +5664,8 @@ MonoBehaviour:
   holeBalanceConfig: {fileID: 11400000, guid: b5ccb93f89f549859f2995d5d0f009c3, type: 2}
   holeBalanceHierarchyConfig: {fileID: 778833221144556677}
   levelProgressUI: {fileID: 0}
+  progressFrameSprite: {fileID: 21300000, guid: 6654b3a577a0ea645b6a4340942e7fd2, type: 3}
+  progressFillSprite: {fileID: 21300000, guid: 006ceb08f6b2ae540be05c5c799e9d47, type: 3}
 --- !u!199 &2576272778403676366
 ParticleSystemRenderer:
   serializedVersion: 6

@@ -7,7 +7,7 @@ namespace ClawbearGames
     {
         [SerializeField] private Vector3 worldOffset = Vector3.zero;
         [SerializeField] private Vector2 screenOffset = new Vector2(0f, -90f);
-        [SerializeField] private Vector2 rootSize = new Vector2(190f, 42f);
+        [SerializeField] private Vector2 rootSize = new Vector2(190f, 52f);
         [SerializeField] private Sprite progressFillSprite = null;
         [SerializeField] private Sprite progressFrameSprite = null;
         
@@ -15,7 +15,8 @@ namespace ClawbearGames
         private RectTransform rootRect;
         private Text levelText;
         private Image fillImage;
-        private static Sprite roundedProgressSprite;
+        private RectTransform fillRect;
+        private Image frameImage;
         private static Sprite whiteSprite;
 
         private void Awake()
@@ -56,12 +57,36 @@ namespace ClawbearGames
             EnsureUiBuilt();
             if (levelText != null)
             {
-                levelText.text = $"Масштаб {level}";
+                levelText.text = $"Hole Level {level}";
             }
 
-            if (fillImage != null)
+            SetFillAmount(normalized);
+        }
+
+        public void ConfigureSprites(Sprite frame, Sprite fill)
+        {
+            if (frame != null)
             {
-                fillImage.fillAmount = Mathf.Clamp01(normalized);
+                progressFrameSprite = frame;
+            }
+
+            if (fill != null)
+            {
+                progressFillSprite = fill;
+            }
+
+            if (frameImage != null && progressFrameSprite != null)
+            {
+                frameImage.sprite = progressFrameSprite;
+                frameImage.type = Image.Type.Simple;
+                frameImage.preserveAspect = true;
+            }
+
+            if (fillImage != null && progressFillSprite != null)
+            {
+                fillImage.sprite = progressFillSprite;
+                fillImage.type = Image.Type.Simple;
+                fillImage.preserveAspect = false;
             }
         }
 
@@ -82,22 +107,52 @@ namespace ClawbearGames
 
             ResolveProgressSprites();
 
-            RectTransform bg = CreateImage("ProgressBg", rootRect, Color.white, progressFrameSprite);
-            bg.sizeDelta = new Vector2(rootSize.x, 14f);
-            bg.anchoredPosition = new Vector2(0f, -10f);
-            Image backgroundImage = bg.GetComponent<Image>();
-            backgroundImage.type = progressFrameSprite != null ? Image.Type.Sliced : Image.Type.Simple;
+            RectTransform barRoot = new GameObject("ProgressBarRoot", typeof(RectTransform)).GetComponent<RectTransform>();
+            barRoot.SetParent(rootRect, false);
+            barRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            barRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            barRoot.pivot = new Vector2(0.5f, 0.5f);
+            barRoot.sizeDelta = new Vector2(rootSize.x, 18f);
+            barRoot.anchoredPosition = new Vector2(0f, 8f);
 
-            RectTransform fill = CreateImage("ProgressFill", bg, Color.white, progressFillSprite);
-            fillImage = fill.GetComponent<Image>();
-            fillImage.type = Image.Type.Filled;
-            fillImage.fillMethod = Image.FillMethod.Horizontal;
-            fillImage.fillAmount = 0f;
+            RectTransform fillMask = new GameObject("ProgressFillMask", typeof(RectTransform), typeof(Image), typeof(RectMask2D)).GetComponent<RectTransform>();
+            fillMask.SetParent(barRoot, false);
+            fillMask.anchorMin = Vector2.zero;
+            fillMask.anchorMax = Vector2.one;
+            fillMask.offsetMin = new Vector2(8f, 4f);
+            fillMask.offsetMax = new Vector2(-8f, -4f);
+            Image fillMaskImage = fillMask.GetComponent<Image>();
+            fillMaskImage.sprite = GetWhiteSprite();
+            fillMaskImage.color = Color.black;
+            fillMaskImage.raycastTarget = false;
+
+            fillRect = CreateImage("ProgressFill", fillMask, Color.white, progressFillSprite);
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(0f, 1f);
+            fillRect.offsetMin = Vector2.zero;
+            fillRect.offsetMax = Vector2.zero;
+            fillRect.pivot = new Vector2(0f, 0.5f);
+            fillImage = fillRect.GetComponent<Image>();
+            fillImage.type = Image.Type.Simple;
+            fillImage.raycastTarget = false;
+
+            RectTransform frameRect = CreateImage("ProgressFrame", barRoot, Color.white, progressFrameSprite);
+            frameRect.anchorMin = Vector2.zero;
+            frameRect.anchorMax = Vector2.one;
+            frameRect.offsetMin = Vector2.zero;
+            frameRect.offsetMax = Vector2.zero;
+            frameImage = frameRect.GetComponent<Image>();
+            frameImage.type = Image.Type.Simple;
+            frameImage.raycastTarget = false;
 
             levelText = CreateText("LevelText", rootRect);
-            levelText.rectTransform.anchoredPosition = new Vector2(0f, 11f);
-            levelText.fontSize = 20;
-            levelText.text = "Масштаб 1";
+            levelText.rectTransform.anchoredPosition = new Vector2(0f, -13f);
+            levelText.fontSize = 18;
+            levelText.text = "Hole Level 1";
+            levelText.raycastTarget = false;
+
+            ConfigureSprites(progressFrameSprite, progressFillSprite);
+            SetFillAmount(0f);
         }
 
         private void ResolveProgressSprites()
@@ -191,46 +246,15 @@ namespace ClawbearGames
             return whiteSprite;
         }
 
-        private static Sprite GetRoundedProgressSprite()
+        private void SetFillAmount(float normalized)
         {
-            if (roundedProgressSprite != null)
+            if (fillRect == null)
             {
-                return roundedProgressSprite;
+                return;
             }
 
-            const int width = 128;
-            const int height = 32;
-            const int radius = 16;
-            Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
-            texture.name = "HoleProgressRounded";
-            texture.filterMode = FilterMode.Bilinear;
-            texture.wrapMode = TextureWrapMode.Clamp;
-
-            Color32[] pixels = new Color32[width * height];
-            Color32 opaque = new Color32(255, 255, 255, 255);
-            Color32 transparent = new Color32(255, 255, 255, 0);
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    bool inMiddle = x >= radius && x < width - radius;
-
-                    float leftDx = x - (radius - 0.5f);
-                    float rightDx = x - (width - radius - 0.5f);
-                    float dy = y - (height * 0.5f - 0.5f);
-                    bool inLeftCap = x < radius && (leftDx * leftDx + dy * dy) <= radius * radius;
-                    bool inRightCap = x >= width - radius && (rightDx * rightDx + dy * dy) <= radius * radius;
-
-                    pixels[y * width + x] = (inMiddle || inLeftCap || inRightCap) ? opaque : transparent;
-                }
-            }
-
-            texture.SetPixels32(pixels);
-            texture.Apply();
-
-            roundedProgressSprite = Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 100f);
-            return roundedProgressSprite;
+            float clamped = Mathf.Clamp01(normalized);
+            fillRect.anchorMax = new Vector2(clamped, 1f);
         }
     }
 }
