@@ -61,9 +61,6 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -156,5 +153,4 @@ MonoBehaviour:
   cashRewardFrequency: 0.3
   objectName: Pine_0
   rigidbody3D: {fileID: 6212437982948224107}
-  meshCollider: {fileID: 3638805929382516574}
   meshRenderer: {fileID: 2777425712930601912}
