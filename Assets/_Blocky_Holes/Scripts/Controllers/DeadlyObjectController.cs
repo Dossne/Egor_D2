@@ -48,9 +48,10 @@ namespace ClawbearGames
             {
                 physicsPullCount++;
 
-                //Pull this target object toward the center of the player
+                //Pull this deadly object toward the center of the player and slightly down into the hole.
                 Vector3 pullDir = (PlayerController.Instance.transform.position - transform.position).normalized;
                 rigidbody3D.AddForce(pullDir * 10f);
+                rigidbody3D.AddForce(Vector3.down * 6f, ForceMode.Acceleration);
             }
 
             //Check falldown
