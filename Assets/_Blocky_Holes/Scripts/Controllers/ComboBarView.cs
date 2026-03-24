@@ -34,8 +34,8 @@ namespace ClawbearGames
         private Coroutine labelPulseRoutine;
         private static Sprite whiteSprite;
 
-        private readonly Color baseFillColor = Color.white;
-        private readonly Color accentFillColor = new Color(1f, 0.95f, 0.55f);
+        private readonly Color baseFillColor = new Color(1f, 0.62f, 0.12f);
+        private readonly Color accentFillColor = new Color(1f, 0.8f, 0.25f);
         private readonly Color baseTextColor = Color.white;
         private readonly Color accentTextColor = new Color(1f, 0.85f, 0.2f);
 
@@ -500,12 +500,12 @@ namespace ClawbearGames
         {
             if (fillSprite == null)
             {
-                fillSprite = TryLoadProgressSprite("progressbar_fill");
+                fillSprite = TryLoadProgressSprite("progressbar_fill_orange");
             }
 
             if (fillSprite == null)
             {
-                fillSprite = TryLoadProgressSprite("progressbar_fill_orange");
+                fillSprite = TryLoadProgressSprite("progressbar_fill");
             }
 
             if (frameSprite == null)

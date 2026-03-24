@@ -423,11 +423,16 @@ namespace ClawbearGames
         public void OnTargetObjectConsumed(int points)
         {
             int basePoints = Mathf.Max(0, points);
-            int bonusPoints = comboController != null ? comboController.EvaluateBonusForPickup(basePoints) : 0;
+            int bonusPoints = 0;
+            if (comboController != null && comboController.IsComboActive)
+            {
+                bonusPoints = comboController.EvaluateBonusForPickup(basePoints);
+            }
+
             int awardedPoints = basePoints + Mathf.Max(0, bonusPoints);
 
             totalPoints += awardedPoints;
-            ShowPointsPopup(awardedPoints);
+            ShowPointsPopup(awardedPoints, bonusPoints > 0);
 
             if (comboController != null)
             {
@@ -619,7 +624,7 @@ namespace ClawbearGames
             }
         }
 
-        private void ShowPointsPopup(int points)
+        private void ShowPointsPopup(int points, bool isComboActive)
         {
             if (points <= 0)
             {
@@ -632,10 +637,10 @@ namespace ClawbearGames
                 return;
             }
 
-            StartCoroutine(CRShowPointsPopup(popupText, points));
+            StartCoroutine(CRShowPointsPopup(popupText, points, isComboActive));
         }
 
-        private IEnumerator CRShowPointsPopup(Text popupText, int points)
+        private IEnumerator CRShowPointsPopup(Text popupText, int points, bool isComboActive)
         {
             RectTransform popupRect = popupText.rectTransform;
             popupText.text = "+" + points.ToString();
@@ -643,7 +648,8 @@ namespace ClawbearGames
 
             float t = 0f;
             const float duration = 1f;
-            Color color = popupText.color;
+            Color comboColor = new Color(1f, 0.58f, 0.1f);
+            Color color = isComboActive ? comboColor : Color.white;
             color.a = 1f;
             popupText.color = color;
             Camera cameraRef = Camera.main;

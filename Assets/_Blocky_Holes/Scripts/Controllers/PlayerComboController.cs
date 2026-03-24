@@ -31,6 +31,9 @@ namespace ClawbearGames
         private bool isActive;
         private bool comboWasActivated;
 
+        public bool IsComboActive => isActive && comboPoints > 0f;
+        public int CurrentComboLevel => comboLevel;
+
         private struct ScoreSample
         {
             public float Time;
