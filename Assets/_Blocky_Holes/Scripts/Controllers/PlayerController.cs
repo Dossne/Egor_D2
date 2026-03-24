@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ClawbearGames
 {
@@ -25,6 +26,11 @@ namespace ClawbearGames
         [SerializeField] private HoleBalanceConfig holeBalanceConfig = null;
         [SerializeField] private HoleBalanceHierarchyConfig holeBalanceHierarchyConfig = null;
         [SerializeField] private HoleLevelProgressUI levelProgressUI = null;
+        [Header("Joystick")]
+        [SerializeField] private CanvasGroup joystickCanvasGroup = null;
+        [SerializeField] private RectTransform joystickRoot = null;
+        [SerializeField] private RectTransform joystickKnob = null;
+        [SerializeField] private float joystickRadius = 100f;
         [SerializeField] private HoleBalanceLevel[] fallbackHoleBalanceLevels = new HoleBalanceLevel[]
         {
             new HoleBalanceLevel(1, 0, 10, 1f, 0.9f, 5.2f, -3.2f),
@@ -62,11 +68,12 @@ namespace ClawbearGames
         private List<TargetObjectController> listDetectedTarget = new List<TargetObjectController>();
         private List<DeadlyObjectController> listDetectedDeadly = new List<DeadlyObjectController>();
         private Vector3 firstInputPos = Vector3.zero;
+        private Vector2 joystickInput = Vector2.zero;
         private float currentHoleSize = 1f;
         private float targetHoleSize = 1f;
         private float movementSpeed = 0f;
-        private float currentSpeed = 0f;
         private bool isStopControl = false;
+        private bool isJoystickHolding = false;
         private int totalPoints = 0;
         private int currentBalanceLevelIndex = -1;
 
@@ -133,6 +140,7 @@ namespace ClawbearGames
             isStopControl = true;
             EnsureLevelProgressUI();
             ApplyBalanceByPoints();
+            SetJoystickVisible(false);
         }
 
         private void Update()
@@ -141,27 +149,14 @@ namespace ClawbearGames
             {
                 if (!isStopControl)
                 {
-                    if (Input.GetMouseButtonDown(0))
-                    {
-                        currentSpeed = movementSpeed / 2f;
-                        firstInputPos = new Vector3(Input.mousePosition.x, 0f, Input.mousePosition.y);
-                    }
-                    else if (Input.GetMouseButton(0))
-                    {
-                        //Update the current speed
-                        currentSpeed = Mathf.Clamp(currentSpeed + Time.deltaTime, 0f, movementSpeed);
+                    HandleJoystickInput();
 
-                        //Calculate the movingDir and move the player 
-                        Vector3 currentInputPos = new Vector3(Input.mousePosition.x, 0f, Input.mousePosition.y);
-                        Vector3 movingDir = (currentInputPos - firstInputPos).normalized;
-                        Vector3 playerPos = transform.position;
-                        playerPos += movingDir * currentSpeed * Time.deltaTime;
-                        transform.position = ClampPositionInsideScreen(playerPos, targetHoleSize * 0.5f);
-                    }
-                    else if (Input.GetMouseButtonUp(0))
+                    if (joystickInput.sqrMagnitude > 0.0001f)
                     {
-                        currentSpeed = movementSpeed / 2f;
-                        firstInputPos = Vector3.zero;
+                        Vector3 movingDir = new Vector3(joystickInput.x, 0f, joystickInput.y);
+                        Vector3 playerPos = transform.position;
+                        playerPos += movingDir * movementSpeed * Time.deltaTime;
+                        transform.position = ClampPositionInsideScreen(playerPos, targetHoleSize * 0.5f);
                     }
 
 
@@ -242,6 +237,7 @@ namespace ClawbearGames
             else
             {
                 isStopControl = false;
+                ResetJoystickState();
             }
         }
 
@@ -260,6 +256,7 @@ namespace ClawbearGames
             ServicesManager.Instance.ShareManager.CreateScreenshot();
             CameraParentController.Instance.Shake();
             isStopControl = true;
+            ResetJoystickState();
         }
 
 
@@ -286,6 +283,65 @@ namespace ClawbearGames
         {
             yield return new WaitForSeconds(0.5f);
             isStopControl = false;
+            ResetJoystickState();
+        }
+
+        private void HandleJoystickInput()
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                isJoystickHolding = true;
+                firstInputPos = new Vector3(Input.mousePosition.x, 0f, Input.mousePosition.y);
+                SetJoystickVisible(true);
+                UpdateJoystickVisual(new Vector2(firstInputPos.x, firstInputPos.z), Vector2.zero);
+            }
+            else if (Input.GetMouseButton(0) && isJoystickHolding)
+            {
+                Vector2 rootPos = new Vector2(firstInputPos.x, firstInputPos.z);
+                Vector2 currentInputPos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+                Vector2 delta = currentInputPos - rootPos;
+                Vector2 clampedDelta = Vector2.ClampMagnitude(delta, joystickRadius);
+                joystickInput = clampedDelta / Mathf.Max(1f, joystickRadius);
+                UpdateJoystickVisual(rootPos, clampedDelta);
+            }
+            else if (Input.GetMouseButtonUp(0))
+            {
+                ResetJoystickState();
+            }
+        }
+
+        private void ResetJoystickState()
+        {
+            isJoystickHolding = false;
+            firstInputPos = Vector3.zero;
+            joystickInput = Vector2.zero;
+            SetJoystickVisible(false);
+            UpdateJoystickVisual(Vector2.zero, Vector2.zero);
+        }
+
+        private void SetJoystickVisible(bool isVisible)
+        {
+            if (joystickCanvasGroup == null)
+            {
+                return;
+            }
+
+            joystickCanvasGroup.alpha = isVisible ? 1f : 0f;
+            joystickCanvasGroup.blocksRaycasts = false;
+            joystickCanvasGroup.interactable = false;
+        }
+
+        private void UpdateJoystickVisual(Vector2 rootScreenPos, Vector2 knobOffset)
+        {
+            if (joystickRoot != null)
+            {
+                joystickRoot.position = rootScreenPos;
+            }
+
+            if (joystickKnob != null)
+            {
+                joystickKnob.position = rootScreenPos + knobOffset;
+            }
         }
 
 
