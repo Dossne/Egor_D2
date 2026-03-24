@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,11 +7,14 @@ namespace ClawbearGames
     public class HoleLevelProgressUI : MonoBehaviour
     {
         [SerializeField] private Vector3 worldOffset = Vector3.zero;
-        [SerializeField] private Vector2 screenOffset = new Vector2(0f, -110f);
+        [SerializeField] private Vector2 screenOffset = Vector2.zero;
         [SerializeField][Min(0f)] private float holeRadiusOffsetMultiplier = 1.1f;
+        [SerializeField][Min(0f)] private float edgePadding = 6f;
         [SerializeField] private Vector2 rootSize = new Vector2(420f, 122f);
         [SerializeField] private Sprite progressFillSprite = null;
         [SerializeField] private Sprite progressFrameSprite = null;
+        [SerializeField][Range(0.03f, 0.5f)] private float levelFlashDuration = 0.18f;
+        [SerializeField][Range(0f, 1f)] private float flashMaxAlpha = 0.75f;
         
         private Camera targetCamera;
         private RectTransform rootRect;
@@ -18,6 +22,10 @@ namespace ClawbearGames
         private Image fillImage;
         private RectTransform fillRect;
         private Image frameImage;
+        private Image flashImage;
+        private Coroutine flashRoutine;
+        private float currentFill;
+        private int currentLevel;
         private static Sprite whiteSprite;
 
         private void Awake()
@@ -50,7 +58,7 @@ namespace ClawbearGames
             }
 
             rootRect.gameObject.SetActive(true);
-            float dynamicYOffset = CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier;
+            float dynamicYOffset = (CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier) + edgePadding;
             Vector3 finalOffset = (Vector3)screenOffset + Vector3.down * dynamicYOffset;
             rootRect.position = screenPoint + finalOffset;
         }
@@ -64,6 +72,16 @@ namespace ClawbearGames
             }
 
             SetFillAmount(normalized);
+
+            bool fillIncreased = normalized > (currentFill + 0.0001f);
+            bool levelIncreased = level > currentLevel;
+            if (fillIncreased || levelIncreased)
+            {
+                PlayFlash();
+            }
+
+            currentFill = Mathf.Clamp01(normalized);
+            currentLevel = level;
         }
 
         public void ConfigureSprites(Sprite frame, Sprite fill)
@@ -147,6 +165,15 @@ namespace ClawbearGames
             frameImage = frameRect.GetComponent<Image>();
             frameImage.type = Image.Type.Simple;
             frameImage.raycastTarget = false;
+            
+            RectTransform flashRect = CreateImage("ProgressFlash", barRoot, new Color(1f, 1f, 1f, 0f));
+            flashRect.anchorMin = Vector2.zero;
+            flashRect.anchorMax = Vector2.one;
+            flashRect.offsetMin = Vector2.zero;
+            flashRect.offsetMax = Vector2.zero;
+            flashImage = flashRect.GetComponent<Image>();
+            flashImage.raycastTarget = false;
+            flashImage.gameObject.SetActive(false);
 
             levelText = CreateText("LevelText", rootRect);
             levelText.rectTransform.anchoredPosition = new Vector2(0f, -38f);
@@ -279,6 +306,42 @@ namespace ClawbearGames
 
             float clamped = Mathf.Clamp01(normalized);
             fillRect.anchorMax = new Vector2(clamped, 1f);
+        }
+
+        private void PlayFlash()
+        {
+            if (flashImage == null)
+            {
+                return;
+            }
+
+            if (flashRoutine != null)
+            {
+                StopCoroutine(flashRoutine);
+            }
+
+            flashRoutine = StartCoroutine(CRFlash());
+        }
+
+        private IEnumerator CRFlash()
+        {
+            flashImage.gameObject.SetActive(true);
+            Color color = flashImage.color;
+            float t = 0f;
+
+            while (t < levelFlashDuration)
+            {
+                t += Time.deltaTime;
+                float normalized = Mathf.Clamp01(t / levelFlashDuration);
+                color.a = Mathf.Lerp(flashMaxAlpha, 0f, normalized);
+                flashImage.color = color;
+                yield return null;
+            }
+
+            color.a = 0f;
+            flashImage.color = color;
+            flashImage.gameObject.SetActive(false);
+            flashRoutine = null;
         }
     }
 }
