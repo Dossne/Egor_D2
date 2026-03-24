@@ -7,9 +7,10 @@ namespace ClawbearGames
     public class ComboBarView : MonoBehaviour
     {
         [Header("Layout")]
-        [SerializeField] private Vector2 screenOffset = new Vector2(0f, 110f);
+        [SerializeField] private Vector2 screenOffset = Vector2.zero;
         [SerializeField] private Vector2 rootSize = new Vector2(420f, 122f);
         [SerializeField][Min(0f)] private float holeRadiusOffsetMultiplier = 1.1f;
+        [SerializeField][Min(0f)] private float edgePadding = 6f;
 
         [Header("Sprites")]
         [SerializeField] private Sprite frameSprite;
@@ -23,16 +24,20 @@ namespace ClawbearGames
         [SerializeField][Range(1f, 1.2f)] private float levelUpScaleMultiplier = 1.04f;
         [SerializeField][Range(1f, 1.45f)] private float labelShowScaleMultiplier = 1.25f;
         [SerializeField][Range(1f, 1.35f)] private float labelLevelScaleMultiplier = 1.16f;
+        [SerializeField][Range(0.03f, 0.5f)] private float flashDurationMultiplier = 0.8f;
+        [SerializeField][Range(0f, 1f)] private float flashMaxAlpha = 0.8f;
 
         private Camera targetCamera;
         private RectTransform rootRect;
         private RectTransform fillRect;
         private Image fillImage;
+        private Image flashImage;
         private Text comboText;
         private CanvasGroup canvasGroup;
         private Coroutine showHideRoutine;
         private Coroutine barPulseRoutine;
         private Coroutine labelPulseRoutine;
+        private Coroutine flashRoutine;
         private static Sprite whiteSprite;
 
         private readonly Color baseFillColor = new Color(1f, 0.62f, 0.12f);
@@ -81,7 +86,9 @@ namespace ClawbearGames
             SetFillImmediate(0f);
             SetFillSmoothTarget(normalizedFill);
 
-            StartShowAnimation(Mathf.Max(0.05f, flashDuration));
+            float safeDuration = Mathf.Max(0.05f, flashDuration);
+            StartShowAnimation(safeDuration);
+            PlayFlash(Mathf.Max(0.05f, safeDuration * flashDurationMultiplier));
         }
 
         public void PlayLevelUp(int level, float normalizedFill, float flashDuration)
@@ -92,8 +99,11 @@ namespace ClawbearGames
 
             SetLevel(level, false);
             SetFillSmoothTarget(normalizedFill);
-            PlayBarPulse(Mathf.Max(0.05f, flashDuration), levelUpScaleMultiplier, false);
-            PlayLabelPulse(Mathf.Max(0.05f, flashDuration), labelLevelScaleMultiplier, true);
+
+            float safeDuration = Mathf.Max(0.05f, flashDuration);
+            PlayBarPulse(safeDuration, levelUpScaleMultiplier, false);
+            PlayLabelPulse(safeDuration, labelLevelScaleMultiplier, true);
+            PlayFlash(Mathf.Max(0.05f, safeDuration * flashDurationMultiplier));
         }
 
         public void ApplyIdleUpdate(int level, float normalizedFill)
@@ -200,6 +210,12 @@ namespace ClawbearGames
                 labelPulseRoutine = null;
             }
 
+            if (flashRoutine != null)
+            {
+                StopCoroutine(flashRoutine);
+                flashRoutine = null;
+            }
+
             float startAlpha = canvasGroup.alpha;
             Vector3 startScale = rootRect.localScale;
             Vector3 endScale = Vector3.one * 0.92f;
@@ -303,6 +319,42 @@ namespace ClawbearGames
             labelPulseRoutine = null;
         }
 
+        private void PlayFlash(float duration)
+        {
+            if (flashImage == null)
+            {
+                return;
+            }
+
+            if (flashRoutine != null)
+            {
+                StopCoroutine(flashRoutine);
+            }
+
+            flashRoutine = StartCoroutine(CRFlash(duration));
+        }
+
+        private IEnumerator CRFlash(float duration)
+        {
+            flashImage.gameObject.SetActive(true);
+            Color color = flashImage.color;
+            float t = 0f;
+
+            while (t < duration)
+            {
+                t += Time.deltaTime;
+                float normalized = Mathf.Clamp01(t / duration);
+                color.a = Mathf.Lerp(flashMaxAlpha, 0f, normalized);
+                flashImage.color = color;
+                yield return null;
+            }
+
+            color.a = 0f;
+            flashImage.color = color;
+            flashImage.gameObject.SetActive(false);
+            flashRoutine = null;
+        }
+
         private void SetLevel(int level, bool playLabelPulse)
         {
             comboText.text = level > 0 ? $"+{level}" : string.Empty;
@@ -383,7 +435,7 @@ namespace ClawbearGames
                 canvasGroup.alpha = 1f;
             }
 
-            float dynamicYOffset = CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier;
+            float dynamicYOffset = (CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier) + edgePadding;
             Vector3 finalOffset = (Vector3)screenOffset + Vector3.up * dynamicYOffset;
             rootRect.position = screenPoint + finalOffset;
         }
@@ -435,6 +487,11 @@ namespace ClawbearGames
             if (fillImage != null)
             {
                 fillImage.color = baseFillColor;
+            }
+
+            if (flashImage != null)
+            {
+                flashImage.gameObject.SetActive(false);
             }
 
             if (canvasGroup != null)
@@ -506,14 +563,24 @@ namespace ClawbearGames
             frameImage.preserveAspect = true;
             frameImage.raycastTarget = false;
 
+            RectTransform flashRect = CreateImage("ComboFlash", barRoot, new Color(1f, 1f, 1f, 0f));
+            flashRect.anchorMin = Vector2.zero;
+            flashRect.anchorMax = Vector2.one;
+            flashRect.offsetMin = Vector2.zero;
+            flashRect.offsetMax = Vector2.zero;
+            flashImage = flashRect.GetComponent<Image>();
+            flashImage.raycastTarget = false;
+            flashImage.gameObject.SetActive(false);
+
             comboText = CreateText("ComboText", rootRect);
-            comboText.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            comboText.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            comboText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            comboText.rectTransform.anchoredPosition = new Vector2(0f, -38f);
-            comboText.rectTransform.sizeDelta = new Vector2(0f, 52f);
+            comboText.rectTransform.anchorMin = new Vector2(1f, 0.5f);
+            comboText.rectTransform.anchorMax = new Vector2(1f, 0.5f);
+            comboText.rectTransform.pivot = new Vector2(1f, 0.5f);
+            comboText.rectTransform.anchoredPosition = new Vector2(-12f, 24f);
+            comboText.rectTransform.sizeDelta = new Vector2(130f, 52f);
             comboText.fontSize = 36;
             comboText.text = string.Empty;
+            comboText.alignment = TextAnchor.MiddleRight;
             comboText.raycastTarget = false;
 
             SetFillImmediate(0f);
