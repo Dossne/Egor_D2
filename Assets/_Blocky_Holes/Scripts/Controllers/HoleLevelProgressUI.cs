@@ -32,6 +32,8 @@ namespace ClawbearGames
         private float currentFill;
         private int currentLevel;
         private static Sprite whiteSprite;
+        private static readonly Vector2 progressInnerInsetMin = new Vector2(8f, 5f);
+        private static readonly Vector2 progressInnerInsetMax = new Vector2(-8f, -5f);
 
         private void Awake()
         {
@@ -132,7 +134,7 @@ namespace ClawbearGames
             {
                 frameImage.sprite = progressFrameSprite;
                 frameImage.type = Image.Type.Simple;
-                frameImage.preserveAspect = true;
+                frameImage.preserveAspect = false;
             }
 
             if (fillImage != null && progressFillSprite != null)
@@ -172,8 +174,8 @@ namespace ClawbearGames
             fillMask.SetParent(barRoot, false);
             fillMask.anchorMin = Vector2.zero;
             fillMask.anchorMax = Vector2.one;
-            fillMask.offsetMin = new Vector2(8f, 5f);
-            fillMask.offsetMax = new Vector2(-8f, -5f);
+            fillMask.offsetMin = progressInnerInsetMin;
+            fillMask.offsetMax = progressInnerInsetMax;
             Image fillMaskImage = fillMask.GetComponent<Image>();
             fillMaskImage.sprite = GetWhiteSprite();
             fillMaskImage.color = Color.clear;
@@ -192,8 +194,8 @@ namespace ClawbearGames
             RectTransform frameRect = CreateImage("ProgressFrame", barRoot, Color.white, progressFrameSprite);
             frameRect.anchorMin = Vector2.zero;
             frameRect.anchorMax = Vector2.one;
-            frameRect.offsetMin = Vector2.zero;
-            frameRect.offsetMax = Vector2.zero;
+            frameRect.offsetMin = progressInnerInsetMin;
+            frameRect.offsetMax = progressInnerInsetMax;
             frameImage = frameRect.GetComponent<Image>();
             frameImage.type = Image.Type.Simple;
             frameImage.raycastTarget = false;
