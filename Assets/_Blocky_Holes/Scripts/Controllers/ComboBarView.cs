@@ -43,6 +43,7 @@ namespace ClawbearGames
         private Coroutine barPulseRoutine;
         private Coroutine labelPulseRoutine;
         private Coroutine flashRoutine;
+        private PlayerController playerController;
         private static Sprite whiteSprite;
 
         private readonly Color baseFillColor = new Color(1f, 0.62f, 0.12f);
@@ -59,6 +60,39 @@ namespace ClawbearGames
         {
             EnsureUiBuilt();
             SetHiddenImmediate();
+        }
+
+        private void OnDestroy()
+        {
+            if (showHideRoutine != null)
+            {
+                StopCoroutine(showHideRoutine);
+                showHideRoutine = null;
+            }
+
+            if (barPulseRoutine != null)
+            {
+                StopCoroutine(barPulseRoutine);
+                barPulseRoutine = null;
+            }
+
+            if (labelPulseRoutine != null)
+            {
+                StopCoroutine(labelPulseRoutine);
+                labelPulseRoutine = null;
+            }
+
+            if (flashRoutine != null)
+            {
+                StopCoroutine(flashRoutine);
+                flashRoutine = null;
+            }
+
+            if (rootRect != null)
+            {
+                Destroy(rootRect.gameObject);
+                rootRect = null;
+            }
         }
 
         private void LateUpdate()
@@ -469,7 +503,15 @@ namespace ClawbearGames
                 return 0f;
             }
 
-            float worldRadius = Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) * 0.5f;
+            if (playerController == null)
+            {
+                playerController = GetComponent<PlayerController>();
+            }
+
+            float worldRadius = playerController != null
+                ? playerController.GetHoleWorldRadius()
+                : Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) * 0.5f;
+
             if (worldRadius <= 0f)
             {
                 return 0f;

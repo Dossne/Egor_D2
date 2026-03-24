@@ -28,6 +28,7 @@ namespace ClawbearGames
         private Image frameImage;
         private Image flashImage;
         private Coroutine flashRoutine;
+        private PlayerController playerController;
         private float currentFill;
         private int currentLevel;
         private static Sprite whiteSprite;
@@ -46,6 +47,18 @@ namespace ClawbearGames
 
         private void OnDestroy()
         {
+            if (flashRoutine != null)
+            {
+                StopCoroutine(flashRoutine);
+                flashRoutine = null;
+            }
+
+            if (rootRect != null)
+            {
+                Destroy(rootRect.gameObject);
+                rootRect = null;
+            }
+
             if (activeInstance == this)
             {
                 activeInstance = null;
@@ -304,7 +317,15 @@ namespace ClawbearGames
                 return 0f;
             }
 
-            float worldRadius = Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) * 0.5f;
+            if (playerController == null)
+            {
+                playerController = GetComponent<PlayerController>();
+            }
+
+            float worldRadius = playerController != null
+                ? playerController.GetHoleWorldRadius()
+                : Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) * 0.5f;
+
             if (worldRadius <= 0f)
             {
                 return 0f;
