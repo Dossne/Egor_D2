@@ -42,6 +42,8 @@ namespace ClawbearGames
 
 
 
+        private const int LevelDurationSeconds = 180;
+
         private IngameState ingameState = IngameState.Ingame_GameOver;
         private AudioClip backgroundMusic = null;
         private LevelData levelData = null;
@@ -240,13 +242,13 @@ namespace ClawbearGames
         /// <returns></returns>
         private IEnumerator CRCountdownTime()
         {
-            int currentTime = levelData.TimeToCompleteLevel;
+            int currentTime = LevelDurationSeconds;
             ViewManager.Instance.IngameViewController.UpdateTimePanel(1f, currentTime);
             while(currentTime > 0)
             {
                 yield return new WaitForSeconds(1f);
                 currentTime--;
-                ViewManager.Instance.IngameViewController.UpdateTimePanel(currentTime / (float)levelData.TimeToCompleteLevel, currentTime);
+                ViewManager.Instance.IngameViewController.UpdateTimePanel(currentTime / (float)LevelDurationSeconds, currentTime);
                 if (ingameState != IngameState.Ingame_Playing) { yield break; }
             }
 

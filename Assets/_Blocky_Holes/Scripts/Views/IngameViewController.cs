@@ -157,7 +157,8 @@ namespace ClawbearGames
         /// <param name="currentTime"></param>
         public void UpdateTimePanel(float fillAmount, int currentTime)
         {
-            timeText.text = currentTime.ToString();
+            int displayTime = Mathf.Max(0, currentTime);
+            timeText.text = string.Format("{0:00}:{1:00}", displayTime / 60, displayTime % 60);
             timeSliderImage.fillAmount = fillAmount;
         }
 

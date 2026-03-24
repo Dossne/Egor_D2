@@ -570,7 +570,7 @@ namespace ClawbearGames
                 popupObject.transform.SetParent(popupCanvas.transform, false);
                 pointsPopupText = popupObject.GetComponent<Text>();
                 pointsPopupText.alignment = TextAnchor.MiddleCenter;
-                pointsPopupText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                pointsPopupText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
                 pointsPopupText.fontSize = 42;
                 pointsPopupText.fontStyle = FontStyle.Bold;
                 pointsPopupText.color = Color.white;
@@ -588,7 +588,7 @@ namespace ClawbearGames
             pointsPopupText.enabled = true;
 
             float t = 0f;
-            const float duration = 0.45f;
+            const float duration = 1f;
             Vector2 startPos = new Vector2(Screen.width * 0.5f, Screen.height * 0.45f);
             Vector2 endPos = startPos + Vector2.up * 60f;
             Color color = pointsPopupText.color;
@@ -600,7 +600,7 @@ namespace ClawbearGames
                 t += Time.deltaTime;
                 float normalized = Mathf.Clamp01(t / duration);
                 popupRect.position = Vector2.Lerp(startPos, endPos, normalized);
-                color.a = Mathf.Lerp(1f, 0f, normalized);
+                color.a = (normalized < 0.75f) ? 1f : Mathf.Lerp(1f, 0f, (normalized - 0.75f) / 0.25f);
                 pointsPopupText.color = color;
                 yield return null;
             }
