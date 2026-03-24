@@ -1402,6 +1402,9 @@ MonoBehaviour:
   - {fileID: 2296301989859048915}
   - {fileID: 2296801387078995795}
   - {fileID: 2295795168822617173}
+  holeDetectionRadiusMultiplier: 0.75
+  holeBalanceConfig: {fileID: 11400000, guid: b5ccb93f89f549859f2995d5d0f009c3, type: 2}
+  levelProgressUI: {fileID: 0}
 --- !u!1 &292430955
 GameObject:
   m_ObjectHideFlags: 0
