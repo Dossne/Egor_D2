@@ -134,14 +134,15 @@ namespace ClawbearGames
             //Add other actions here
 
             //Setup character
-            if (ServicesManager.Instance == null || ServicesManager.Instance.CharacterContainer == null)
+            CharacterContainer characterContainer = ResolveCharacterContainer();
+            if (characterContainer == null)
             {
                 Debug.LogError("PlayerController: ServicesManager or CharacterContainer is not assigned in scene.");
                 enabled = false;
                 return;
             }
 
-            CharacterInforController[] characters = ServicesManager.Instance.CharacterContainer.CharacterInforControllers;
+            CharacterInforController[] characters = characterContainer.CharacterInforControllers;
             if (characters == null || characters.Length == 0)
             {
                 Debug.LogError("PlayerController: CharacterContainer has no characters assigned.");
@@ -149,7 +150,7 @@ namespace ClawbearGames
                 return;
             }
 
-            int selectedCharacterIndex = ServicesManager.Instance.CharacterContainer.SelectedCharacterIndex;
+            int selectedCharacterIndex = characterContainer.SelectedCharacterIndex;
             if (selectedCharacterIndex < 0 || selectedCharacterIndex >= characters.Length)
             {
                 Debug.LogError($"PlayerController: Selected character index {selectedCharacterIndex} is out of range.");
@@ -166,6 +167,16 @@ namespace ClawbearGames
             EnsureLevelProgressUI();
             ApplyBalanceByPoints();
             SetJoystickVisible(false);
+        }
+
+        private CharacterContainer ResolveCharacterContainer()
+        {
+            if (ServicesManager.Instance != null && ServicesManager.Instance.CharacterContainer != null)
+            {
+                return ServicesManager.Instance.CharacterContainer;
+            }
+
+            return FindObjectOfType<CharacterContainer>(true);
         }
 
         private void Update()
