@@ -83,6 +83,8 @@ namespace ClawbearGames
         private int currentBalanceLevelIndex = -1;
         private readonly List<Text> pointsPopupPool = new List<Text>();
         [SerializeField] private Vector3 pointsPopupWorldOffset = new Vector3(0f, 0.6f, 0f);
+        [SerializeField][Range(1, 10)] private int maxSimultaneousPointsPopups = 3;
+        private int activePointsPopupCount = 0;
         private static Sprite holeCenterFillSprite = null;
 
         private void OnEnable()
@@ -92,6 +94,7 @@ namespace ClawbearGames
         private void OnDisable()
         {
             IngameManager.IngameStateChanged -= IngameManager_IngameStateChanged;
+            activePointsPopupCount = 0;
         }
         private void IngameManager_IngameStateChanged(IngameState obj)
         {
@@ -717,12 +720,18 @@ namespace ClawbearGames
                 return;
             }
 
+            if (activePointsPopupCount >= Mathf.Max(1, maxSimultaneousPointsPopups))
+            {
+                return;
+            }
+
             Text popupText = CreatePointsPopupText();
             if (popupText == null)
             {
                 return;
             }
 
+            activePointsPopupCount++;
             StartCoroutine(CRShowPointsPopup(popupText, points, isComboActive));
         }
 
@@ -766,6 +775,7 @@ namespace ClawbearGames
             popupText.enabled = false;
             color.a = 1f;
             popupText.color = color;
+            activePointsPopupCount = Mathf.Max(0, activePointsPopupCount - 1);
         }
 
         private Text CreatePointsPopupText()
