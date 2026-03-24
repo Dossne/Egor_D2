@@ -7,8 +7,9 @@ namespace ClawbearGames
     public class ComboBarView : MonoBehaviour
     {
         [Header("Layout")]
-        [SerializeField] private Vector2 screenOffset = new Vector2(0f, 145f);
-        [SerializeField] private Vector2 rootSize = new Vector2(220f, 62f);
+        [SerializeField] private Vector2 screenOffset = new Vector2(0f, 110f);
+        [SerializeField] private Vector2 rootSize = new Vector2(420f, 122f);
+        [SerializeField][Min(0f)] private float holeRadiusOffsetMultiplier = 1.1f;
 
         [Header("Sprites")]
         [SerializeField] private Sprite frameSprite;
@@ -382,7 +383,29 @@ namespace ClawbearGames
                 canvasGroup.alpha = 1f;
             }
 
-            rootRect.position = screenPoint + (Vector3)screenOffset;
+            float dynamicYOffset = CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier;
+            Vector3 finalOffset = (Vector3)screenOffset + Vector3.up * dynamicYOffset;
+            rootRect.position = screenPoint + finalOffset;
+        }
+
+
+        private float CalculateHoleScreenRadius(Camera cameraRef)
+        {
+            if (cameraRef == null)
+            {
+                return 0f;
+            }
+
+            float worldRadius = Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) * 0.5f;
+            if (worldRadius <= 0f)
+            {
+                return 0f;
+            }
+
+            Vector3 centerScreen = cameraRef.WorldToScreenPoint(transform.position);
+            Vector3 edgeWorld = transform.position + cameraRef.transform.right * worldRadius;
+            Vector3 edgeScreen = cameraRef.WorldToScreenPoint(edgeWorld);
+            return Mathf.Abs(edgeScreen.x - centerScreen.x);
         }
 
         private void EnsureShownForUpdate()
@@ -446,11 +469,11 @@ namespace ClawbearGames
 
             RectTransform barRoot = new GameObject("ComboBarRoot", typeof(RectTransform)).GetComponent<RectTransform>();
             barRoot.SetParent(rootRect, false);
-            barRoot.anchorMin = new Vector2(0f, 0.5f);
-            barRoot.anchorMax = new Vector2(1f, 0.5f);
+            barRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            barRoot.anchorMax = new Vector2(0.5f, 0.5f);
             barRoot.pivot = new Vector2(0.5f, 0.5f);
-            barRoot.offsetMin = new Vector2(0f, -14f);
-            barRoot.offsetMax = new Vector2(-46f, 14f);
+            barRoot.sizeDelta = new Vector2(rootSize.x, 58f);
+            barRoot.anchoredPosition = new Vector2(0f, 24f);
 
             RectTransform fillMask = new GameObject("ComboFillMask", typeof(RectTransform), typeof(Image), typeof(RectMask2D)).GetComponent<RectTransform>();
             fillMask.SetParent(barRoot, false);
@@ -484,12 +507,12 @@ namespace ClawbearGames
             frameImage.raycastTarget = false;
 
             comboText = CreateText("ComboText", rootRect);
-            comboText.rectTransform.anchorMin = new Vector2(1f, 0.5f);
-            comboText.rectTransform.anchorMax = new Vector2(1f, 0.5f);
+            comboText.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            comboText.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             comboText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            comboText.rectTransform.anchoredPosition = new Vector2(-20f, 0f);
-            comboText.rectTransform.sizeDelta = new Vector2(52f, 40f);
-            comboText.fontSize = 24;
+            comboText.rectTransform.anchoredPosition = new Vector2(0f, -38f);
+            comboText.rectTransform.sizeDelta = new Vector2(0f, 52f);
+            comboText.fontSize = 36;
             comboText.text = string.Empty;
             comboText.raycastTarget = false;
 

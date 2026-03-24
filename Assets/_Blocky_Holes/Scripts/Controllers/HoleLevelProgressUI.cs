@@ -6,7 +6,8 @@ namespace ClawbearGames
     public class HoleLevelProgressUI : MonoBehaviour
     {
         [SerializeField] private Vector3 worldOffset = Vector3.zero;
-        [SerializeField] private Vector2 screenOffset = new Vector2(0f, -140f);
+        [SerializeField] private Vector2 screenOffset = new Vector2(0f, -110f);
+        [SerializeField][Min(0f)] private float holeRadiusOffsetMultiplier = 1.1f;
         [SerializeField] private Vector2 rootSize = new Vector2(420f, 122f);
         [SerializeField] private Sprite progressFillSprite = null;
         [SerializeField] private Sprite progressFrameSprite = null;
@@ -49,7 +50,9 @@ namespace ClawbearGames
             }
 
             rootRect.gameObject.SetActive(true);
-            rootRect.position = screenPoint + (Vector3)screenOffset;
+            float dynamicYOffset = CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier;
+            Vector3 finalOffset = (Vector3)screenOffset + Vector3.down * dynamicYOffset;
+            rootRect.position = screenPoint + finalOffset;
         }
 
         public void SetProgress(int level, float normalized)
@@ -148,7 +151,7 @@ namespace ClawbearGames
             levelText = CreateText("LevelText", rootRect);
             levelText.rectTransform.anchoredPosition = new Vector2(0f, -38f);
             levelText.rectTransform.sizeDelta = new Vector2(0f, 42f);
-            levelText.fontSize = 28;
+            levelText.fontSize = 36;
             levelText.text = "Hole Level 1";
             levelText.raycastTarget = false;
 
@@ -245,6 +248,26 @@ namespace ClawbearGames
             Texture2D texture = Texture2D.whiteTexture;
             whiteSprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             return whiteSprite;
+        }
+
+
+        private float CalculateHoleScreenRadius(Camera cameraRef)
+        {
+            if (cameraRef == null)
+            {
+                return 0f;
+            }
+
+            float worldRadius = Mathf.Max(transform.lossyScale.x, transform.lossyScale.z) * 0.5f;
+            if (worldRadius <= 0f)
+            {
+                return 0f;
+            }
+
+            Vector3 centerScreen = cameraRef.WorldToScreenPoint(transform.position + worldOffset);
+            Vector3 edgeWorld = transform.position + worldOffset + cameraRef.transform.right * worldRadius;
+            Vector3 edgeScreen = cameraRef.WorldToScreenPoint(edgeWorld);
+            return Mathf.Abs(edgeScreen.x - centerScreen.x);
         }
 
         private void SetFillAmount(float normalized)
