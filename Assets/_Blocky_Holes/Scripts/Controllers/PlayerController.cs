@@ -27,6 +27,8 @@ namespace ClawbearGames
         [SerializeField] private HoleBalanceConfig holeBalanceConfig = null;
         [SerializeField] private HoleBalanceHierarchyConfig holeBalanceHierarchyConfig = null;
         [SerializeField] private HoleLevelProgressUI levelProgressUI = null;
+        [SerializeField] private Sprite progressFrameSprite = null;
+        [SerializeField] private Sprite progressFillSprite = null;
         [Header("Joystick")]
         [SerializeField] private CanvasGroup joystickCanvasGroup = null;
         [SerializeField] private RectTransform joystickRoot = null;
@@ -77,7 +79,7 @@ namespace ClawbearGames
         private bool isJoystickHolding = false;
         private int totalPoints = 0;
         private int currentBalanceLevelIndex = -1;
-        private Text pointsPopupText = null;
+        private readonly List<Text> pointsPopupPool = new List<Text>();
         [SerializeField] private Vector3 pointsPopupWorldOffset = new Vector3(0f, 0.6f, 0f);
 
         private void OnEnable()
@@ -528,6 +530,7 @@ namespace ClawbearGames
         {
             if (levelProgressUI != null)
             {
+                levelProgressUI.ConfigureSprites(progressFrameSprite, progressFillSprite);
                 return;
             }
 
@@ -536,6 +539,8 @@ namespace ClawbearGames
             {
                 levelProgressUI = gameObject.AddComponent<HoleLevelProgressUI>();
             }
+
+            levelProgressUI.ConfigureSprites(progressFrameSprite, progressFillSprite);
         }
 
         private void EnsureHoleCenterIsBlack()
@@ -555,6 +560,18 @@ namespace ClawbearGames
             if (holeBodyRenderer.material.HasProperty("_Color"))
             {
                 holeBodyRenderer.material.SetColor("_Color", Color.black);
+            }
+
+            if (holeBodyRenderer.material.HasProperty("_BaseColor"))
+            {
+                holeBodyRenderer.material.SetColor("_BaseColor", Color.black);
+            }
+
+            Vector3 bodyLocalPos = holeBody.localPosition;
+            if (bodyLocalPos.y < -0.02f)
+            {
+                bodyLocalPos.y = -0.02f;
+                holeBody.localPosition = bodyLocalPos;
             }
         }
 
@@ -582,40 +599,26 @@ namespace ClawbearGames
                 return;
             }
 
-            if (pointsPopupText == null)
+            Text popupText = CreatePointsPopupText();
+            if (popupText == null)
             {
-                Canvas popupCanvas = FindObjectOfType<Canvas>();
-                if (popupCanvas == null)
-                {
-                    return;
-                }
-
-                GameObject popupObject = new GameObject("PointsPopup", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-                popupObject.transform.SetParent(popupCanvas.transform, false);
-                pointsPopupText = popupObject.GetComponent<Text>();
-                pointsPopupText.alignment = TextAnchor.MiddleCenter;
-                pointsPopupText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                pointsPopupText.fontSize = 42;
-                pointsPopupText.fontStyle = FontStyle.Bold;
-                pointsPopupText.color = Color.white;
-                pointsPopupText.raycastTarget = false;
+                return;
             }
 
-            StopCoroutine(nameof(CRShowPointsPopup));
-            StartCoroutine(nameof(CRShowPointsPopup), points);
+            StartCoroutine(CRShowPointsPopup(popupText, points));
         }
 
-        private IEnumerator CRShowPointsPopup(int points)
+        private IEnumerator CRShowPointsPopup(Text popupText, int points)
         {
-            RectTransform popupRect = pointsPopupText.rectTransform;
-            pointsPopupText.text = "+" + points.ToString();
-            pointsPopupText.enabled = true;
+            RectTransform popupRect = popupText.rectTransform;
+            popupText.text = "+" + points.ToString();
+            popupText.enabled = true;
 
             float t = 0f;
             const float duration = 1f;
-            Color color = pointsPopupText.color;
+            Color color = popupText.color;
             color.a = 1f;
-            pointsPopupText.color = color;
+            popupText.color = color;
             Camera cameraRef = Camera.main;
 
             while (t < duration)
@@ -633,17 +636,38 @@ namespace ClawbearGames
                     Vector3 worldPos = transform.position + pointsPopupWorldOffset + Vector3.up * (normalized * 0.8f);
                     Vector3 screenPos = cameraRef.WorldToScreenPoint(worldPos);
                     popupRect.position = screenPos;
-                    pointsPopupText.enabled = screenPos.z > 0f;
+                    popupText.enabled = screenPos.z > 0f;
                 }
 
                 color.a = (normalized < 0.75f) ? 1f : Mathf.Lerp(1f, 0f, (normalized - 0.75f) / 0.25f);
-                pointsPopupText.color = color;
+                popupText.color = color;
                 yield return null;
             }
 
-            pointsPopupText.enabled = false;
+            popupText.enabled = false;
             color.a = 1f;
-            pointsPopupText.color = color;
+            popupText.color = color;
+        }
+
+        private Text CreatePointsPopupText()
+        {
+            Canvas popupCanvas = FindObjectOfType<Canvas>();
+            if (popupCanvas == null)
+            {
+                return null;
+            }
+
+            GameObject popupObject = new GameObject("PointsPopup", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+            popupObject.transform.SetParent(popupCanvas.transform, false);
+            Text popupText = popupObject.GetComponent<Text>();
+            popupText.alignment = TextAnchor.MiddleCenter;
+            popupText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            popupText.fontSize = 42;
+            popupText.fontStyle = FontStyle.Bold;
+            popupText.color = Color.white;
+            popupText.raycastTarget = false;
+            pointsPopupPool.Add(popupText);
+            return popupText;
         }
 
 
