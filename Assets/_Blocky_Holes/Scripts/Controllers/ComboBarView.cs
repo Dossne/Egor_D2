@@ -13,6 +13,8 @@ namespace ClawbearGames
         [SerializeField][Min(0f)] private float edgePadding = 8f;
         [SerializeField][Min(0f)] private float holeGap = 16f;
         [SerializeField][Min(0f)] private float rootBottomClearance = 6f;
+        [SerializeField][Min(1f)] private float contourRadiusMultiplier = 1.36f;
+        [SerializeField][Min(0f)] private float contourClearance = 8f;
 
         [Header("Sprites")]
         [SerializeField] private Sprite frameSprite;
@@ -34,6 +36,7 @@ namespace ClawbearGames
         private RectTransform fillRect;
         private Image fillImage;
         private Image flashImage;
+        private Image glowFlashImage;
         private Text comboText;
         private CanvasGroup canvasGroup;
         private Coroutine showHideRoutine;
@@ -339,7 +342,12 @@ namespace ClawbearGames
         private IEnumerator CRFlash(float duration)
         {
             flashImage.gameObject.SetActive(true);
+            if (glowFlashImage != null)
+            {
+                glowFlashImage.gameObject.SetActive(true);
+            }
             Color color = flashImage.color;
+            Color glowColor = glowFlashImage != null ? glowFlashImage.color : Color.clear;
             float t = 0f;
 
             while (t < duration)
@@ -348,12 +356,23 @@ namespace ClawbearGames
                 float normalized = Mathf.Clamp01(t / duration);
                 color.a = Mathf.Lerp(flashMaxAlpha, 0f, normalized);
                 flashImage.color = color;
+                if (glowFlashImage != null)
+                {
+                    glowColor.a = Mathf.Lerp(flashMaxAlpha * 0.75f, 0f, normalized);
+                    glowFlashImage.color = glowColor;
+                }
                 yield return null;
             }
 
             color.a = 0f;
             flashImage.color = color;
             flashImage.gameObject.SetActive(false);
+            if (glowFlashImage != null)
+            {
+                glowColor.a = 0f;
+                glowFlashImage.color = glowColor;
+                glowFlashImage.gameObject.SetActive(false);
+            }
             flashRoutine = null;
         }
 
@@ -459,7 +478,8 @@ namespace ClawbearGames
             Vector3 centerScreen = cameraRef.WorldToScreenPoint(transform.position);
             Vector3 edgeWorld = transform.position + cameraRef.transform.right * worldRadius;
             Vector3 edgeScreen = cameraRef.WorldToScreenPoint(edgeWorld);
-            return Mathf.Abs(edgeScreen.x - centerScreen.x);
+            float baseRadius = Mathf.Abs(edgeScreen.x - centerScreen.x);
+            return (baseRadius * contourRadiusMultiplier) + contourClearance;
         }
 
         private void EnsureShownForUpdate()
@@ -494,6 +514,11 @@ namespace ClawbearGames
             if (flashImage != null)
             {
                 flashImage.gameObject.SetActive(false);
+            }
+
+            if (glowFlashImage != null)
+            {
+                glowFlashImage.gameObject.SetActive(false);
             }
 
             if (canvasGroup != null)
@@ -573,6 +598,16 @@ namespace ClawbearGames
             flashImage = flashRect.GetComponent<Image>();
             flashImage.raycastTarget = false;
             flashImage.gameObject.SetActive(false);
+
+            RectTransform glowFlashRect = CreateImage("ComboGlowFlash", barRoot, new Color(1f, 0.85f, 0.35f, 0f));
+            glowFlashRect.SetAsFirstSibling();
+            glowFlashRect.anchorMin = Vector2.zero;
+            glowFlashRect.anchorMax = Vector2.one;
+            glowFlashRect.offsetMin = new Vector2(-18f, -10f);
+            glowFlashRect.offsetMax = new Vector2(18f, 10f);
+            glowFlashImage = glowFlashRect.GetComponent<Image>();
+            glowFlashImage.raycastTarget = false;
+            glowFlashImage.gameObject.SetActive(false);
 
             comboText = CreateText("ComboText", rootRect);
             comboText.rectTransform.anchorMin = new Vector2(1f, 0.5f);
