@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: ComboConfig
   m_EditorClassIdentifier: 
   activationWindowSeconds: 5
-  activationScoreThreshold: 5
-  decayPointsPerSecond: 5
-  comboLevelThresholds: 05000000c80000002c010000
+  activationScoreThreshold: 50
+  decayPointsPerSecond: 15
+  comboLevelThresholds: 3200000064000000c8000000f4010000b0040000
   uiScreenOffset: {x: 0, y: 145}
   flashDuration: 0.2
