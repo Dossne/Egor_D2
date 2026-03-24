@@ -29,6 +29,8 @@ namespace ClawbearGames
         [SerializeField] private HoleLevelProgressUI levelProgressUI = null;
         [SerializeField] private Sprite progressFrameSprite = null;
         [SerializeField] private Sprite progressFillSprite = null;
+        [SerializeField] private ComboConfig comboConfig = null;
+        [SerializeField] private PlayerComboController comboController = null;
         [Header("Joystick")]
         [SerializeField] private CanvasGroup joystickCanvasGroup = null;
         [SerializeField] private RectTransform joystickRoot = null;
@@ -171,6 +173,7 @@ namespace ClawbearGames
             //Setup parameters and objects
             isStopControl = true;
             EnsureLevelProgressUI();
+            EnsureComboController();
             ApplyBalanceByPoints();
             SetJoystickVisible(false);
         }
@@ -420,8 +423,18 @@ namespace ClawbearGames
         /// <param name="points"></param>
         public void OnTargetObjectConsumed(int points)
         {
-            totalPoints += Mathf.Max(0, points);
-            ShowPointsPopup(points);
+            int basePoints = Mathf.Max(0, points);
+            int bonusPoints = comboController != null ? comboController.EvaluateBonusForPickup(basePoints) : 0;
+            int awardedPoints = basePoints + Mathf.Max(0, bonusPoints);
+
+            totalPoints += awardedPoints;
+            ShowPointsPopup(awardedPoints);
+
+            if (comboController != null)
+            {
+                comboController.RegisterAwardedPoints(awardedPoints);
+            }
+
             ApplyBalanceByPoints();
         }
 
@@ -541,6 +554,26 @@ namespace ClawbearGames
             }
 
             levelProgressUI.ConfigureSprites(progressFrameSprite, progressFillSprite);
+        }
+
+        private void EnsureComboController()
+        {
+            if (comboController == null)
+            {
+                comboController = GetComponent<PlayerComboController>();
+            }
+
+            if (comboController == null)
+            {
+                comboController = gameObject.AddComponent<PlayerComboController>();
+            }
+
+            if (comboConfig == null)
+            {
+                comboConfig = Resources.Load<ComboConfig>("Configs/ComboConfig");
+            }
+
+            comboController.Setup(comboConfig);
         }
 
         private void EnsureHoleCenterIsBlack()
