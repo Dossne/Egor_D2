@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,14 +13,10 @@ namespace ClawbearGames
             Hide
         }
 
-        [Header("Combo Gameplay")]
-        [SerializeField][Min(0.1f)] private float activationWindowSeconds = 5f;
-        [SerializeField][Min(1)] private int activationScoreThreshold = 100;
-        [SerializeField][Min(0f)] private float decayPointsPerSecond = 30f;
-        [SerializeField] private int[] comboLevelThresholds = { 100, 200, 300 };
+        private const string DefaultComboConfigPath = "Configs/ComboConfig";
 
-        [Header("Combo UI")]
-        [SerializeField][Range(0.05f, 0.6f)] private float flashDuration = 0.2f;
+        [Header("Combo Config")]
+        [SerializeField] private ComboConfig comboConfig;
 
         private readonly Queue<ScoreSample> scoreWindowSamples = new Queue<ScoreSample>();
         private ComboBarView comboBarView;
@@ -33,6 +28,11 @@ namespace ClawbearGames
 
         public bool IsComboActive => isActive && comboPoints > 0f;
         public int CurrentComboLevel => comboLevel;
+
+        private void Awake()
+        {
+            EnsureConfig();
+        }
 
         private struct ScoreSample
         {
@@ -48,7 +48,7 @@ namespace ClawbearGames
 
         public void Setup()
         {
-            EnsureValidConfig();
+            EnsureConfig();
             EnsureView();
             RefreshUi(ComboUiEvent.Hide);
         }
@@ -81,7 +81,7 @@ namespace ClawbearGames
             if (!isActive)
             {
                 comboPoints = Mathf.Max(0f, scoreInWindow);
-                if (scoreInWindow > activationScoreThreshold)
+                if (scoreInWindow >= GetActivationScoreThreshold())
                 {
                     isActive = true;
                     comboWasActivated = true;
@@ -108,7 +108,7 @@ namespace ClawbearGames
             if (!isActive)
             {
                 comboPoints = Mathf.Max(0f, scoreInWindow);
-                if (scoreInWindow > activationScoreThreshold)
+                if (scoreInWindow >= GetActivationScoreThreshold())
                 {
                     isActive = true;
                     comboWasActivated = true;
@@ -116,7 +116,7 @@ namespace ClawbearGames
             }
             else
             {
-                comboPoints = Mathf.Max(0f, comboPoints - decayPointsPerSecond * Time.deltaTime);
+                comboPoints = Mathf.Max(0f, comboPoints - GetDecayPointsPerSecond() * Time.deltaTime);
                 if (comboPoints <= 0.001f)
                 {
                     comboPoints = 0f;
@@ -132,30 +132,20 @@ namespace ClawbearGames
 
         private void OnValidate()
         {
-            EnsureValidConfig();
+            EnsureConfig();
         }
 
-        private void EnsureValidConfig()
+        private void EnsureConfig()
         {
-            activationWindowSeconds = Mathf.Max(0.1f, activationWindowSeconds);
-            activationScoreThreshold = Mathf.Max(1, activationScoreThreshold);
-            decayPointsPerSecond = Mathf.Max(0f, decayPointsPerSecond);
-            flashDuration = Mathf.Clamp(flashDuration, 0.05f, 0.6f);
-
-            if (comboLevelThresholds == null || comboLevelThresholds.Length == 0)
+            if (comboConfig != null)
             {
-                comboLevelThresholds = new[] { activationScoreThreshold };
                 return;
             }
 
-            Array.Sort(comboLevelThresholds);
-            for (int i = 0; i < comboLevelThresholds.Length; i++)
+            comboConfig = Resources.Load<ComboConfig>(DefaultComboConfigPath);
+            if (comboConfig == null)
             {
-                comboLevelThresholds[i] = Mathf.Max(1, comboLevelThresholds[i]);
-                if (i > 0 && comboLevelThresholds[i] < comboLevelThresholds[i - 1])
-                {
-                    comboLevelThresholds[i] = comboLevelThresholds[i - 1];
-                }
+                Debug.LogWarning($"[{nameof(PlayerComboController)}] {nameof(ComboConfig)} is not assigned and fallback load from Resources/{DefaultComboConfigPath} failed.", this);
             }
         }
 
@@ -184,7 +174,7 @@ namespace ClawbearGames
             while (scoreWindowSamples.Count > 0)
             {
                 ScoreSample oldest = scoreWindowSamples.Peek();
-                if (now - oldest.Time <= activationWindowSeconds)
+                if (now - oldest.Time <= GetActivationWindowSeconds())
                 {
                     break;
                 }
@@ -201,40 +191,7 @@ namespace ClawbearGames
 
         private void UpdateComboLevel()
         {
-            comboLevel = GetLevelByPoints(comboPoints);
-        }
-
-        private int GetLevelByPoints(float points)
-        {
-            if (comboLevelThresholds == null || comboLevelThresholds.Length == 0)
-            {
-                return 0;
-            }
-
-            int level = 0;
-            int pointsRounded = Mathf.FloorToInt(points);
-            for (int i = 0; i < comboLevelThresholds.Length; i++)
-            {
-                if (pointsRounded >= comboLevelThresholds[i])
-                {
-                    level = i + 1;
-                    continue;
-                }
-
-                break;
-            }
-
-            return level;
-        }
-
-        private int GetFillCapPoints()
-        {
-            if (comboLevelThresholds != null && comboLevelThresholds.Length > 0)
-            {
-                return Mathf.Max(1, comboLevelThresholds[0]);
-            }
-
-            return Mathf.Max(1, activationScoreThreshold);
+            comboLevel = comboConfig != null ? comboConfig.GetLevelByPoints(comboPoints) : 0;
         }
 
         private void RefreshUi(ComboUiEvent uiEvent)
@@ -245,16 +202,16 @@ namespace ClawbearGames
                 return;
             }
 
-            float fillCap = GetFillCapPoints();
+            float fillCap = comboConfig != null ? comboConfig.GetFillCapPoints() : 1f;
             float fillAmount = fillCap > 0f ? Mathf.Clamp01(comboPoints / fillCap) : 0f;
 
             switch (uiEvent)
             {
                 case ComboUiEvent.Show:
-                    comboBarView.PlayShow(comboLevel, fillAmount, flashDuration);
+                    comboBarView.PlayShow(comboLevel, fillAmount, GetFlashDuration());
                     break;
                 case ComboUiEvent.LevelUp:
-                    comboBarView.PlayLevelUp(comboLevel, fillAmount, flashDuration);
+                    comboBarView.PlayLevelUp(comboLevel, fillAmount, GetFlashDuration());
                     break;
                 case ComboUiEvent.Hide:
                     comboBarView.PlayHide();
@@ -284,6 +241,26 @@ namespace ClawbearGames
             {
                 comboBarView = gameObject.AddComponent<ComboBarView>();
             }
+        }
+
+        private float GetActivationWindowSeconds()
+        {
+            return comboConfig != null ? comboConfig.ActivationWindowSeconds : 0.1f;
+        }
+
+        private int GetActivationScoreThreshold()
+        {
+            return comboConfig != null ? comboConfig.ActivationScoreThreshold : 1;
+        }
+
+        private float GetDecayPointsPerSecond()
+        {
+            return comboConfig != null ? comboConfig.DecayPointsPerSecond : 0f;
+        }
+
+        private float GetFlashDuration()
+        {
+            return comboConfig != null ? comboConfig.FlashDuration : 0.2f;
         }
     }
 }
