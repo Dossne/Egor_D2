@@ -45,6 +45,8 @@ namespace ClawbearGames
         private void Start()
         {
             offset = transform.position - PlayerController.Instance.transform.position;
+            offset.x = 0f;
+            offset.z = 0f;
             cameraLocalPos = cameraTrans.localPosition;
         }
 
