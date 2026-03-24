@@ -188,6 +188,9 @@ namespace ClawbearGames
             ServicesManager.Instance.SoundManager.StopMusic(0.5f);
             ServicesManager.Instance.SoundManager.PlaySound(ServicesManager.Instance.SoundManager.LevelCompleted);
 
+            int levelRewardCoins = ServicesManager.Instance.CoinManager.GetRewardedCoins();
+            ServicesManager.Instance.CoinManager.AddCollectedCoins(levelRewardCoins, 0f);
+
             //Play effects
             confettiEffects[0].transform.parent.position = PlayerController.Instance.transform.position;
             confettiEffects[0].transform.parent.gameObject.SetActive(true);

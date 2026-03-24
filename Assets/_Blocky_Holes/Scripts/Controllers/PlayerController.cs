@@ -319,7 +319,6 @@ namespace ClawbearGames
         public void OnTargetObjectConsumed(int points)
         {
             totalPoints += Mathf.Max(0, points);
-            CreateCashEffect(points);
             ApplyBalanceByPoints();
         }
 
@@ -360,11 +359,7 @@ namespace ClawbearGames
                 }
             }
 
-            levelProgressUI = GetComponentInChildren<HoleLevelProgressUI>(true);
-            if (levelProgressUI == null)
-            {
-                levelProgressUI = gameObject.AddComponent<HoleLevelProgressUI>();
-            }
+            return result;
         }
 
         private Vector3 ClampPositionInsideScreen(Vector3 desiredPosition, float holeRadius)
@@ -431,33 +426,6 @@ namespace ClawbearGames
             {
                 levelProgressUI = gameObject.AddComponent<HoleLevelProgressUI>();
             }
-        }
-
-        private Vector3 ClampPositionInsideScreen(Vector3 desiredPosition, float holeRadius)
-        {
-            Camera cameraRef = Camera.main;
-            if (cameraRef == null)
-            {
-                return desiredPosition;
-            }
-
-            Vector3 viewport = cameraRef.WorldToViewportPoint(desiredPosition);
-            Vector3 viewportRight = cameraRef.WorldToViewportPoint(desiredPosition + cameraRef.transform.right * holeRadius);
-            Vector3 viewportUp = cameraRef.WorldToViewportPoint(desiredPosition + cameraRef.transform.up * holeRadius);
-
-            float viewportRadiusX = Mathf.Abs(viewportRight.x - viewport.x);
-            float viewportRadiusY = Mathf.Abs(viewportUp.y - viewport.y);
-
-            float clampedX = Mathf.Clamp(viewport.x, viewportRadiusX, 1f - viewportRadiusX);
-            float clampedY = Mathf.Clamp(viewport.y, viewportRadiusY, 1f - viewportRadiusY);
-            Ray ray = cameraRef.ViewportPointToRay(new Vector3(clampedX, clampedY, 0f));
-            Plane movePlane = new Plane(Vector3.up, new Vector3(0f, desiredPosition.y, 0f));
-            if (movePlane.Raycast(ray, out float enterDistance))
-            {
-                return ray.GetPoint(enterDistance);
-            }
-
-            return desiredPosition;
         }
 
         private void DisableIdleHoleEffects()
