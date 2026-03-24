@@ -8,7 +8,9 @@ namespace ClawbearGames
         public static CameraParentController Instance { private set; get; }
 
         [Header("Camera Configurations")]
+        [SerializeField] private bool useSmoothFollow = false;
         [SerializeField] private float smoothTime = 0.15f;
+        [SerializeField] private bool enableShake = false;
         [SerializeField] private float shakeDuration = 0.5f;
         [SerializeField] private float shakeAmount = 0.25f;
         [SerializeField] private float decreaseFactor = 1.5f;
@@ -56,7 +58,16 @@ namespace ClawbearGames
             {
                 Vector3 targetPos = PlayerController.Instance.transform.position + offset;
                 targetPos.y = transform.position.y;
-                transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref velocity, smoothTime);
+
+                if (useSmoothFollow && smoothTime > 0f)
+                {
+                    transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref velocity, smoothTime);
+                }
+                else
+                {
+                    transform.position = targetPos;
+                }
+
                 UpdateCameraLookAtPlayer();
             }
         }
@@ -90,6 +101,11 @@ namespace ClawbearGames
         /// </summary>
         public void Shake()
         {
+            if (!enableShake)
+            {
+                return;
+            }
+
             StartCoroutine(CRShake());
         }
 
