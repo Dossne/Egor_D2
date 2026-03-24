@@ -21,6 +21,23 @@ namespace ClawbearGames
         [SerializeField] private Transform fireEffectTrans = null;
         [SerializeField] private SpriteRenderer holeSpriteRenderer = null;
         [SerializeField] private ParticleSystem[] holeFireEffects = null;
+        [SerializeField][Range(0.1f, 1f)] private float holeDetectionRadiusMultiplier = 0.75f;
+        [SerializeField] private HoleBalanceLevel[] holeBalanceLevels = new HoleBalanceLevel[]
+        {
+            new HoleBalanceLevel(0, 1f, 0.9f, 3.2f, -1.5f),
+            new HoleBalanceLevel(10, 1.4f, 1.1f, 4f, -1.85f),
+            new HoleBalanceLevel(30, 1.9f, 1.25f, 4.5f, -2.1f),
+            new HoleBalanceLevel(130, 2.45f, 1.45f, 5.5f, -2.55f),
+            new HoleBalanceLevel(330, 2.9f, 1.75f, 6f, -2.8f),
+            new HoleBalanceLevel(630, 3.3f, 2f, 6.5f, -3f),
+            new HoleBalanceLevel(1030, 3.75f, 2.2f, 7f, -3.25f),
+            new HoleBalanceLevel(1530, 4.2f, 2.4f, 7.5f, -3.5f),
+            new HoleBalanceLevel(2130, 4.8f, 2.6f, 8.5f, -4f),
+            new HoleBalanceLevel(2830, 5.5f, 2.8f, 9.5f, -4.5f),
+            new HoleBalanceLevel(3630, 5.9f, 3f, 10f, -4.75f),
+            new HoleBalanceLevel(4530, 6.3f, 3.2f, 10.5f, -5f),
+            new HoleBalanceLevel(5530, 6.7f, 3.4f, 11f, -5.25f),
+        };
 
 
         public PlayerState PlayerState
@@ -47,6 +64,8 @@ namespace ClawbearGames
         private float movementSpeed = 0f;
         private float currentSpeed = 0f;
         private bool isStopControl = false;
+        private int totalPoints = 0;
+        private int currentBalanceLevelIndex = -1;
 
         private void OnEnable()
         {
@@ -105,9 +124,11 @@ namespace ClawbearGames
             //Setup character
             CharacterInforController charControl = ServicesManager.Instance.CharacterContainer.CharacterInforControllers[ServicesManager.Instance.CharacterContainer.SelectedCharacterIndex];
             holeSpriteRenderer.sprite = charControl.HoleSprite;
+            DisableIdleHoleEffects();
 
             //Setup parameters and objects
             isStopControl = true;
+            ApplyBalanceByPoints();
         }
 
         private void Update()
@@ -143,7 +164,8 @@ namespace ClawbearGames
                     //Check for deadly objects and deadly objects
                     listDetectedTarget.Clear();
                     listDetectedDeadly.Clear();
-                    Collider[] delectedColliders = Physics.OverlapSphere(transform.position, targetHoleSize);
+                    float holeDetectionRadius = targetHoleSize * holeDetectionRadiusMultiplier;
+                    Collider[] delectedColliders = Physics.OverlapSphere(transform.position, holeDetectionRadius);
                     foreach (Collider collider in delectedColliders)
                     {
                         if (collider.CompareTag("Object"))
@@ -190,7 +212,8 @@ namespace ClawbearGames
                     {
                         currentHoleSize = Mathf.Clamp(currentHoleSize + Time.deltaTime, 1f, targetHoleSize);
                         holeParentTrans.localScale = new Vector3(currentHoleSize, 1f, currentHoleSize);
-                        CameraParentController.Instance.UpdateDistance(currentHoleSize);
+                        HoleBalanceLevel currentLevel = holeBalanceLevels[Mathf.Max(currentBalanceLevelIndex, 0)];
+                        CameraParentController.Instance.UpdateDistance(currentLevel.CameraY, currentLevel.CameraZ);
                     }
                 }
             }
@@ -284,44 +307,67 @@ namespace ClawbearGames
         public void UpdateHoleSize(float amount)
         {
             targetHoleSize = Mathf.Clamp(targetHoleSize + amount, 1f, 100f);
+        }
 
-            for(int i = 0; i < holeFireEffects.Length; i++)
+        /// <summary>
+        /// Handle score and growth when a target object is consumed.
+        /// </summary>
+        /// <param name="points"></param>
+        public void OnTargetObjectConsumed(int points)
+        {
+            totalPoints += Mathf.Max(0, points);
+            CreateCashEffect(points);
+            ApplyBalanceByPoints();
+        }
+
+        private void ApplyBalanceByPoints()
+        {
+            int levelIndex = GetBalanceLevelIndexByPoints(totalPoints);
+            HoleBalanceLevel currentLevel = holeBalanceLevels[levelIndex];
+            targetHoleSize = currentLevel.HeroScale;
+            movementSpeed = currentLevel.HeroMoveSpeed;
+            CameraParentController.Instance.UpdateDistance(currentLevel.CameraY, currentLevel.CameraZ);
+
+            if (levelIndex != currentBalanceLevelIndex)
             {
-                //Adjust lifetime
-                var main = holeFireEffects[i].main;
-                main.startLifetime = new ParticleSystem.MinMaxCurve(targetHoleSize / 2f, targetHoleSize);
+                currentBalanceLevelIndex = levelIndex;
+                EffectManager.Instance.CreateTargetObjectExplode(transform.position + Vector3.up * 0.15f, targetHoleSize);
+            }
+        }
 
-                //Adjust redius
-                var shape = holeFireEffects[i].shape;
-                shape.radius = targetHoleSize * 0.6f;
-
-                //Adjust emission count
-                var parEmission = holeFireEffects[i].emission;
-                parEmission.rateOverTime = Mathf.RoundToInt(targetHoleSize * 30f);
-
-                //Adjust size
-                if (i == 0)
+        private int GetBalanceLevelIndexByPoints(int points)
+        {
+            int result = 0;
+            for (int i = 0; i < holeBalanceLevels.Length; i++)
+            {
+                if (points >= holeBalanceLevels[i].PointsSum)
                 {
-                    main.startSize3D = true;
-                    main.startSizeX = targetHoleSize * 3f;
-                    main.startSizeY = targetHoleSize * 3f;
-                    main.startSizeZ = targetHoleSize * 4f;
-                }
-                else if (i == 1)
-                {
-                    main.startSize = targetHoleSize * 0.1f;
+                    result = i;
                 }
                 else
                 {
-                    main.startSize = new ParticleSystem.MinMaxCurve(targetHoleSize, targetHoleSize * 3f);
+                    break;
                 }
             }
 
-            float newY = -(targetHoleSize * 1.8f);
-            fireEffectTrans.localPosition = new Vector3(fireEffectTrans.localPosition.x, newY, fireEffectTrans.localPosition.z);
+            return result;
+        }
 
-            //Create effect
-            EffectManager.Instance.CreateTargetObjectExplode(transform.position + Vector3.up * 0.15f, currentHoleSize);
+        private void DisableIdleHoleEffects()
+        {
+            if (fireEffectTrans != null)
+            {
+                fireEffectTrans.gameObject.SetActive(false);
+            }
+
+            for (int i = 0; i < holeFireEffects.Length; i++)
+            {
+                if (holeFireEffects[i] != null)
+                {
+                    holeFireEffects[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    holeFireEffects[i].gameObject.SetActive(false);
+                }
+            }
         }
 
 
@@ -345,6 +391,31 @@ namespace ClawbearGames
         public void CreateCashEffect(int amount)
         {
             EffectManager.Instance.CreateCashEffect(transform.position + Vector3.down * 0.5f, amount);
+        }
+
+        [System.Serializable]
+        private struct HoleBalanceLevel
+        {
+            [SerializeField] private int pointsSum;
+            [SerializeField] private float heroScale;
+            [SerializeField] private float heroMoveSpeed;
+            [SerializeField] private float cameraY;
+            [SerializeField] private float cameraZ;
+
+            public int PointsSum => pointsSum;
+            public float HeroScale => heroScale;
+            public float HeroMoveSpeed => heroMoveSpeed;
+            public float CameraY => cameraY;
+            public float CameraZ => cameraZ;
+
+            public HoleBalanceLevel(int pointsSum, float heroScale, float heroMoveSpeed, float cameraY, float cameraZ)
+            {
+                this.pointsSum = pointsSum;
+                this.heroScale = heroScale;
+                this.heroMoveSpeed = heroMoveSpeed;
+                this.cameraY = cameraY;
+                this.cameraZ = cameraZ;
+            }
         }
     }
 }
