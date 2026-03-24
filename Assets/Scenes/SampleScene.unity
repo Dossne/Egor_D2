@@ -132,6 +132,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224666547}
   - component: {fileID: 224666546}
+  - component: {fileID: 224666548}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -258,6 +259,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &224666548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 224666544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 717fa92dcab0429497c5844a064e5a25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  activationWindowSeconds: 5
+  activationScoreThreshold: 30
+  decayPointsPerSecond: 10
+  comboLevelThresholds: 1e0000005a00000064000000c80000002c01000090010000
+  flashDuration: 0.2
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
