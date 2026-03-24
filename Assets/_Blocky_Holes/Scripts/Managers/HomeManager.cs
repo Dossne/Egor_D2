@@ -38,6 +38,8 @@ namespace ClawbearGames
                 PlayerDataHandler.SaveData(playerData);
             }
 
+            PlayerDataHandler.UpdateCurrentLevel(1);
+
             Application.targetFrameRate = 60;
             ViewManager.Instance.OnShowView(ViewType.HOME_VIEW);
 

@@ -164,6 +164,7 @@ namespace ClawbearGames
             // Preserve the character hole sprite colors (e.g. blue ring skins) instead of forcing black tint.
             holeSpriteRenderer.color = Color.white;
             DisableIdleHoleEffects();
+            EnsureHoleCenterIsBlack();
 
             //Setup parameters and objects
             isStopControl = true;
@@ -534,6 +535,26 @@ namespace ClawbearGames
             if (levelProgressUI == null)
             {
                 levelProgressUI = gameObject.AddComponent<HoleLevelProgressUI>();
+            }
+        }
+
+        private void EnsureHoleCenterIsBlack()
+        {
+            Transform holeBody = holeParentTrans != null ? holeParentTrans.Find("Hole_Body") : null;
+            if (holeBody == null)
+            {
+                return;
+            }
+
+            MeshRenderer holeBodyRenderer = holeBody.GetComponent<MeshRenderer>();
+            if (holeBodyRenderer == null || holeBodyRenderer.material == null)
+            {
+                return;
+            }
+
+            if (holeBodyRenderer.material.HasProperty("_Color"))
+            {
+                holeBodyRenderer.material.SetColor("_Color", Color.black);
             }
         }
 
