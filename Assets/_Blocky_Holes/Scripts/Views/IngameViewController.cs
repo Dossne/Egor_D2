@@ -27,6 +27,7 @@ namespace ClawbearGames
         private List<RectTransform> listTargetObjectDot = new List<RectTransform>();
         private List<RectTransform> listDeadlyObjectDot = new List<RectTransform>();
         private float posScaleFactor = 1.5f;
+        private bool isMiniMapEnabled = false;
 
 
 
@@ -81,6 +82,11 @@ namespace ClawbearGames
 
         private void Update()
         {
+            if (!isMiniMapEnabled || playerDotTrans == null || !playerDotTrans.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
             Vector3 playerPos = PlayerController.Instance.transform.position;
             playerDotTrans.anchoredPosition = new Vector2(playerPos.x * posScaleFactor, playerPos.z * posScaleFactor);
             playerDotTrans.SetAsLastSibling();
@@ -95,6 +101,7 @@ namespace ClawbearGames
         public override void OnShow()
         {
             MoveRectTransform(lelfPanelTrans, lelfPanelTrans.anchoredPosition, new Vector2(lelfPanelTrans.anchoredPosition.x, -10f), 0.5f);
+            SetMiniMapVisible(false);
 
             //Update texts and other fields, parameters
             levelText.text = "Level: " + IngameManager.Instance.CurrentLevel.ToString();
@@ -161,6 +168,11 @@ namespace ClawbearGames
         /// <param name="targetObject"></param>
         public void CreateTargetObjectDot(TargetObjectController targetObject)
         {
+            if (!isMiniMapEnabled)
+            {
+                return;
+            }
+
             RectTransform targetObjectDot = GetTargetObjectDot();
             Vector2 dotPos = new Vector2(targetObject.transform.position.x * posScaleFactor, targetObject.transform.position.z * posScaleFactor);
             targetObjectDot.anchoredPosition = dotPos;
@@ -192,6 +204,11 @@ namespace ClawbearGames
         /// <param name="targetObject"></param>
         public void UpdateTargetObjectPos(TargetObjectController targetObject)
         {
+            if (!isMiniMapEnabled)
+            {
+                return;
+            }
+
             RectTransform targetObjectDot = null;
             dicTargetObjectDot.TryGetValue(targetObject, out targetObjectDot);
             if (targetObjectDot != null)
@@ -208,6 +225,11 @@ namespace ClawbearGames
         /// <param name="deadlyObject"></param>
         public void CreateDeadlyObjectDot(DeadlyObjectController deadlyObject)
         {
+            if (!isMiniMapEnabled)
+            {
+                return;
+            }
+
             RectTransform deadlyObjectDot = GetDeadlyObjectDot();
             Vector2 dotPos = new Vector2(deadlyObject.transform.position.x * posScaleFactor, deadlyObject.transform.position.z * posScaleFactor);
             deadlyObjectDot.anchoredPosition = dotPos;
@@ -239,6 +261,11 @@ namespace ClawbearGames
         /// <param name="deadlyObject"></param>
         public void UpdateDeadlyObjectPos(DeadlyObjectController deadlyObject)
         {
+            if (!isMiniMapEnabled)
+            {
+                return;
+            }
+
             RectTransform deadlyObjectDot = null;
             dicDeadlyObjectDot.TryGetValue(deadlyObject, out deadlyObjectDot);
             if (deadlyObjectDot != null)
@@ -262,6 +289,21 @@ namespace ClawbearGames
                 {
                     watchAdButton.gameObject.SetActive(ServicesManager.Instance.AdManager.IsRewardedAdReady());
                 }
+            }
+        }
+
+        private void SetMiniMapVisible(bool isVisible)
+        {
+            isMiniMapEnabled = isVisible;
+
+            if (mapPanelTrans != null)
+            {
+                mapPanelTrans.gameObject.SetActive(isVisible);
+            }
+
+            if (playerDotTrans != null)
+            {
+                playerDotTrans.gameObject.SetActive(isVisible);
             }
         }
 

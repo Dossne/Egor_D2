@@ -23,6 +23,7 @@ namespace ClawbearGames
         [SerializeField] private SpriteRenderer holeSpriteRenderer = null;
         [SerializeField] private ParticleSystem[] holeFireEffects = null;
         [SerializeField][Range(0.1f, 1f)] private float holeDetectionRadiusMultiplier = 0.75f;
+        [SerializeField][Range(1f, 2f)] private float holeSizeMultiplier = 1.25f;
         [SerializeField] private HoleBalanceConfig holeBalanceConfig = null;
         [SerializeField] private HoleBalanceHierarchyConfig holeBalanceHierarchyConfig = null;
         [SerializeField] private HoleLevelProgressUI levelProgressUI = null;
@@ -76,6 +77,7 @@ namespace ClawbearGames
         private bool isJoystickHolding = false;
         private int totalPoints = 0;
         private int currentBalanceLevelIndex = -1;
+        private Text pointsPopupText = null;
 
         private void OnEnable()
         {
@@ -156,14 +158,16 @@ namespace ClawbearGames
                         Vector3 movingDir = new Vector3(joystickInput.x, 0f, joystickInput.y);
                         Vector3 playerPos = transform.position;
                         playerPos += movingDir * movementSpeed * Time.deltaTime;
-                        transform.position = ClampPositionInsideScreen(playerPos, targetHoleSize * 0.5f);
+                        float effectiveHoleSize = targetHoleSize * holeSizeMultiplier;
+                        transform.position = ClampPositionInsideScreen(playerPos, effectiveHoleSize * 0.5f);
                     }
 
 
                     //Check for deadly objects and deadly objects
                     listDetectedTarget.Clear();
                     listDetectedDeadly.Clear();
-                    float holeDetectionRadius = targetHoleSize * holeDetectionRadiusMultiplier;
+                    float effectiveDetectionSize = targetHoleSize * holeSizeMultiplier;
+                    float holeDetectionRadius = effectiveDetectionSize * holeDetectionRadiusMultiplier;
                     Collider[] delectedColliders = Physics.OverlapSphere(transform.position, holeDetectionRadius);
                     foreach (Collider collider in delectedColliders)
                     {
@@ -207,9 +211,10 @@ namespace ClawbearGames
 
                     //Update hole size based on targetHoleSize
                     currentHoleSize = holeParentTrans.localScale.x;
-                    if (currentHoleSize != targetHoleSize)
+                    float effectiveTargetHoleSize = targetHoleSize * holeSizeMultiplier;
+                    if (currentHoleSize != effectiveTargetHoleSize)
                     {
-                        currentHoleSize = Mathf.Clamp(currentHoleSize + Time.deltaTime, 1f, targetHoleSize);
+                        currentHoleSize = Mathf.Clamp(currentHoleSize + Time.deltaTime, 1f, effectiveTargetHoleSize);
                         holeParentTrans.localScale = new Vector3(currentHoleSize, 1f, currentHoleSize);
                         HoleBalanceLevel currentLevel = GetBalanceLevelByIndex(Mathf.Max(currentBalanceLevelIndex, 0));
                         CameraParentController.Instance.UpdateDistance(currentLevel.CameraY, currentLevel.CameraZ);
@@ -376,6 +381,7 @@ namespace ClawbearGames
         public void OnTargetObjectConsumed(int points)
         {
             totalPoints += Mathf.Max(0, points);
+            ShowPointsPopup(points);
             ApplyBalanceByPoints();
         }
 
@@ -392,7 +398,6 @@ namespace ClawbearGames
             if (levelIndex != currentBalanceLevelIndex)
             {
                 currentBalanceLevelIndex = levelIndex;
-                EffectManager.Instance.CreateTargetObjectExplode(transform.position + Vector3.up * 0.15f, targetHoleSize);
             }
         }
 
@@ -510,6 +515,65 @@ namespace ClawbearGames
                     holeFireEffects[i].gameObject.SetActive(false);
                 }
             }
+        }
+
+        private void ShowPointsPopup(int points)
+        {
+            if (points <= 0)
+            {
+                return;
+            }
+
+            if (pointsPopupText == null)
+            {
+                Canvas popupCanvas = FindObjectOfType<Canvas>();
+                if (popupCanvas == null)
+                {
+                    return;
+                }
+
+                GameObject popupObject = new GameObject("PointsPopup", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+                popupObject.transform.SetParent(popupCanvas.transform, false);
+                pointsPopupText = popupObject.GetComponent<Text>();
+                pointsPopupText.alignment = TextAnchor.MiddleCenter;
+                pointsPopupText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                pointsPopupText.fontSize = 42;
+                pointsPopupText.fontStyle = FontStyle.Bold;
+                pointsPopupText.color = Color.white;
+                pointsPopupText.raycastTarget = false;
+            }
+
+            StopCoroutine(nameof(CRShowPointsPopup));
+            StartCoroutine(nameof(CRShowPointsPopup), points);
+        }
+
+        private IEnumerator CRShowPointsPopup(int points)
+        {
+            RectTransform popupRect = pointsPopupText.rectTransform;
+            pointsPopupText.text = "+" + points.ToString();
+            pointsPopupText.enabled = true;
+
+            float t = 0f;
+            const float duration = 0.45f;
+            Vector2 startPos = new Vector2(Screen.width * 0.5f, Screen.height * 0.45f);
+            Vector2 endPos = startPos + Vector2.up * 60f;
+            Color color = pointsPopupText.color;
+            color.a = 1f;
+            pointsPopupText.color = color;
+
+            while (t < duration)
+            {
+                t += Time.deltaTime;
+                float normalized = Mathf.Clamp01(t / duration);
+                popupRect.position = Vector2.Lerp(startPos, endPos, normalized);
+                color.a = Mathf.Lerp(1f, 0f, normalized);
+                pointsPopupText.color = color;
+                yield return null;
+            }
+
+            pointsPopupText.enabled = false;
+            color.a = 1f;
+            pointsPopupText.color = color;
         }
 
 
