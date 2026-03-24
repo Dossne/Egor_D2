@@ -5660,6 +5660,9 @@ MonoBehaviour:
   - {fileID: 5384349475534174976}
   - {fileID: 8637043152467738781}
   - {fileID: 8465389365289505132}
+  holeDetectionRadiusMultiplier: 0.75
+  holeBalanceConfig: {fileID: 11400000, guid: b5ccb93f89f549859f2995d5d0f009c3, type: 2}
+  levelProgressUI: {fileID: 0}
 --- !u!199 &2576272778403676366
 ParticleSystemRenderer:
   serializedVersion: 6

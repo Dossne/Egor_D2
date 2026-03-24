@@ -22,22 +22,8 @@ namespace ClawbearGames
         [SerializeField] private SpriteRenderer holeSpriteRenderer = null;
         [SerializeField] private ParticleSystem[] holeFireEffects = null;
         [SerializeField][Range(0.1f, 1f)] private float holeDetectionRadiusMultiplier = 0.75f;
-        [SerializeField] private HoleBalanceLevel[] holeBalanceLevels = new HoleBalanceLevel[]
-        {
-            new HoleBalanceLevel(0, 1f, 0.9f, 3.2f, -1.5f),
-            new HoleBalanceLevel(10, 1.4f, 1.1f, 4f, -1.85f),
-            new HoleBalanceLevel(30, 1.9f, 1.25f, 4.5f, -2.1f),
-            new HoleBalanceLevel(130, 2.45f, 1.45f, 5.5f, -2.55f),
-            new HoleBalanceLevel(330, 2.9f, 1.75f, 6f, -2.8f),
-            new HoleBalanceLevel(630, 3.3f, 2f, 6.5f, -3f),
-            new HoleBalanceLevel(1030, 3.75f, 2.2f, 7f, -3.25f),
-            new HoleBalanceLevel(1530, 4.2f, 2.4f, 7.5f, -3.5f),
-            new HoleBalanceLevel(2130, 4.8f, 2.6f, 8.5f, -4f),
-            new HoleBalanceLevel(2830, 5.5f, 2.8f, 9.5f, -4.5f),
-            new HoleBalanceLevel(3630, 5.9f, 3f, 10f, -4.75f),
-            new HoleBalanceLevel(4530, 6.3f, 3.2f, 10.5f, -5f),
-            new HoleBalanceLevel(5530, 6.7f, 3.4f, 11f, -5.25f),
-        };
+        [SerializeField] private HoleBalanceConfig holeBalanceConfig = null;
+        [SerializeField] private HoleLevelProgressUI levelProgressUI = null;
 
 
         public PlayerState PlayerState
@@ -128,6 +114,15 @@ namespace ClawbearGames
 
             //Setup parameters and objects
             isStopControl = true;
+            EnsureLevelProgressUI();
+
+            if (!HasValidBalanceConfig())
+            {
+                Debug.LogError("HoleBalanceConfig is missing or empty on PlayerController.", this);
+                enabled = false;
+                return;
+            }
+
             ApplyBalanceByPoints();
         }
 
@@ -152,7 +147,7 @@ namespace ClawbearGames
                         Vector3 movingDir = (currentInputPos - firstInputPos).normalized;
                         Vector3 playerPos = transform.position;
                         playerPos += movingDir * currentSpeed * Time.deltaTime;
-                        transform.position = playerPos;
+                        transform.position = ClampPositionInsideScreen(playerPos, targetHoleSize * 0.5f);
                     }
                     else if (Input.GetMouseButtonUp(0))
                     {
@@ -212,7 +207,7 @@ namespace ClawbearGames
                     {
                         currentHoleSize = Mathf.Clamp(currentHoleSize + Time.deltaTime, 1f, targetHoleSize);
                         holeParentTrans.localScale = new Vector3(currentHoleSize, 1f, currentHoleSize);
-                        HoleBalanceLevel currentLevel = holeBalanceLevels[Mathf.Max(currentBalanceLevelIndex, 0)];
+                        HoleBalanceLevel currentLevel = GetBalanceLevelByIndex(Mathf.Max(currentBalanceLevelIndex, 0));
                         CameraParentController.Instance.UpdateDistance(currentLevel.CameraY, currentLevel.CameraZ);
                     }
                 }
@@ -323,10 +318,12 @@ namespace ClawbearGames
         private void ApplyBalanceByPoints()
         {
             int levelIndex = GetBalanceLevelIndexByPoints(totalPoints);
-            HoleBalanceLevel currentLevel = holeBalanceLevels[levelIndex];
+            HoleBalanceLevel currentLevel = GetBalanceLevelByIndex(levelIndex);
             targetHoleSize = currentLevel.HeroScale;
             movementSpeed = currentLevel.HeroMoveSpeed;
             CameraParentController.Instance.UpdateDistance(currentLevel.CameraY, currentLevel.CameraZ);
+
+            UpdateLevelProgressUi(levelIndex);
 
             if (levelIndex != currentBalanceLevelIndex)
             {
@@ -337,20 +334,72 @@ namespace ClawbearGames
 
         private int GetBalanceLevelIndexByPoints(int points)
         {
-            int result = 0;
-            for (int i = 0; i < holeBalanceLevels.Length; i++)
+            return holeBalanceConfig.GetLevelIndexByPoints(points);
+        }
+
+        private HoleBalanceLevel GetBalanceLevelByIndex(int levelIndex)
+        {
+            return holeBalanceConfig.GetLevelByIndex(levelIndex);
+        }
+
+        private bool HasValidBalanceConfig()
+        {
+            return holeBalanceConfig != null && holeBalanceConfig.Levels != null && holeBalanceConfig.Levels.Length > 0;
+        }
+
+        private void UpdateLevelProgressUi(int levelIndex)
+        {
+            if (levelProgressUI == null)
             {
-                if (points >= holeBalanceLevels[i].PointsSum)
-                {
-                    result = i;
-                }
-                else
-                {
-                    break;
-                }
+                return;
             }
 
-            return result;
+            HoleBalanceLevel currentLevel = GetBalanceLevelByIndex(levelIndex);
+            int nextPoints = currentLevel.NextPointsSum;
+            int currentPoints = Mathf.Clamp(totalPoints, currentLevel.PointsSum, nextPoints);
+            float normalized = Mathf.InverseLerp(currentLevel.PointsSum, nextPoints, currentPoints);
+            levelProgressUI.SetProgress(currentLevel.Level, normalized);
+        }
+
+        private void EnsureLevelProgressUI()
+        {
+            if (levelProgressUI != null)
+            {
+                return;
+            }
+
+            levelProgressUI = GetComponentInChildren<HoleLevelProgressUI>(true);
+            if (levelProgressUI == null)
+            {
+                levelProgressUI = gameObject.AddComponent<HoleLevelProgressUI>();
+            }
+        }
+
+        private Vector3 ClampPositionInsideScreen(Vector3 desiredPosition, float holeRadius)
+        {
+            Camera cameraRef = Camera.main;
+            if (cameraRef == null)
+            {
+                return desiredPosition;
+            }
+
+            Vector3 viewport = cameraRef.WorldToViewportPoint(desiredPosition);
+            Vector3 viewportRight = cameraRef.WorldToViewportPoint(desiredPosition + cameraRef.transform.right * holeRadius);
+            Vector3 viewportUp = cameraRef.WorldToViewportPoint(desiredPosition + cameraRef.transform.up * holeRadius);
+
+            float viewportRadiusX = Mathf.Abs(viewportRight.x - viewport.x);
+            float viewportRadiusY = Mathf.Abs(viewportUp.y - viewport.y);
+
+            float clampedX = Mathf.Clamp(viewport.x, viewportRadiusX, 1f - viewportRadiusX);
+            float clampedY = Mathf.Clamp(viewport.y, viewportRadiusY, 1f - viewportRadiusY);
+            Ray ray = cameraRef.ViewportPointToRay(new Vector3(clampedX, clampedY, 0f));
+            Plane movePlane = new Plane(Vector3.up, new Vector3(0f, desiredPosition.y, 0f));
+            if (movePlane.Raycast(ray, out float enterDistance))
+            {
+                return ray.GetPoint(enterDistance);
+            }
+
+            return desiredPosition;
         }
 
         private void DisableIdleHoleEffects()
@@ -393,29 +442,5 @@ namespace ClawbearGames
             EffectManager.Instance.CreateCashEffect(transform.position + Vector3.down * 0.5f, amount);
         }
 
-        [System.Serializable]
-        private struct HoleBalanceLevel
-        {
-            [SerializeField] private int pointsSum;
-            [SerializeField] private float heroScale;
-            [SerializeField] private float heroMoveSpeed;
-            [SerializeField] private float cameraY;
-            [SerializeField] private float cameraZ;
-
-            public int PointsSum => pointsSum;
-            public float HeroScale => heroScale;
-            public float HeroMoveSpeed => heroMoveSpeed;
-            public float CameraY => cameraY;
-            public float CameraZ => cameraZ;
-
-            public HoleBalanceLevel(int pointsSum, float heroScale, float heroMoveSpeed, float cameraY, float cameraZ)
-            {
-                this.pointsSum = pointsSum;
-                this.heroScale = heroScale;
-                this.heroMoveSpeed = heroMoveSpeed;
-                this.cameraY = cameraY;
-                this.cameraZ = cameraZ;
-            }
-        }
     }
 }
