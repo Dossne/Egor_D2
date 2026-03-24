@@ -1,27 +1,29 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace ClawbearGames
 {
-    public class HoleLevelProgressUI : MonoBehaviour
+    public class ComboBarView : MonoBehaviour
     {
-        [SerializeField] private Vector3 worldOffset = Vector3.zero;
-        [SerializeField] private Vector2 screenOffset = new Vector2(0f, -140f);
-        [SerializeField] private Vector2 rootSize = new Vector2(220f, 68f);
-        [SerializeField] private Sprite progressFillSprite = null;
-        [SerializeField] private Sprite progressFrameSprite = null;
-        
+        [SerializeField] private Vector2 screenOffset = new Vector2(0f, 145f);
+        [SerializeField] private Vector2 rootSize = new Vector2(220f, 62f);
+        [SerializeField] private Sprite frameSprite;
+        [SerializeField] private Sprite fillSprite;
+
         private Camera targetCamera;
         private RectTransform rootRect;
-        private Text levelText;
-        private Image fillImage;
         private RectTransform fillRect;
-        private Image frameImage;
+        private Image fillImage;
+        private Text comboText;
+        private CanvasGroup canvasGroup;
+        private Coroutine flashRoutine;
         private static Sprite whiteSprite;
 
         private void Awake()
         {
             EnsureUiBuilt();
+            SetVisible(false);
         }
 
         private void LateUpdate()
@@ -41,7 +43,7 @@ namespace ClawbearGames
                 return;
             }
 
-            Vector3 screenPoint = targetCamera.WorldToScreenPoint(transform.position + worldOffset);
+            Vector3 screenPoint = targetCamera.WorldToScreenPoint(transform.position);
             if (screenPoint.z <= 0f)
             {
                 rootRect.gameObject.SetActive(false);
@@ -52,42 +54,92 @@ namespace ClawbearGames
             rootRect.position = screenPoint + (Vector3)screenOffset;
         }
 
-        public void SetProgress(int level, float normalized)
+        public void Configure(ComboConfig config)
         {
-            EnsureUiBuilt();
-            if (levelText != null)
+            if (config == null)
             {
-                levelText.text = $"Hole Level {level}";
+                return;
             }
 
-            SetFillAmount(normalized);
+            screenOffset = config.UiScreenOffset;
         }
 
-        public void ConfigureSprites(Sprite frame, Sprite fill)
+        public void SetVisible(bool visible)
         {
-            if (frame != null)
+            EnsureUiBuilt();
+            rootRect.gameObject.SetActive(visible);
+            if (canvasGroup != null)
             {
-                progressFrameSprite = frame;
+                canvasGroup.alpha = visible ? 1f : 0f;
+            }
+        }
+
+        public void SetFill(float normalized)
+        {
+            EnsureUiBuilt();
+            fillRect.anchorMax = new Vector2(Mathf.Clamp01(normalized), 1f);
+        }
+
+        public void SetLevel(int level)
+        {
+            EnsureUiBuilt();
+            comboText.text = level > 0 ? $"+{level}" : string.Empty;
+        }
+
+        public void PlayFlash(float duration)
+        {
+            EnsureUiBuilt();
+            if (flashRoutine != null)
+            {
+                StopCoroutine(flashRoutine);
             }
 
-            if (fill != null)
+            flashRoutine = StartCoroutine(CRFlash(Mathf.Max(0.05f, duration)));
+        }
+
+        private IEnumerator CRFlash(float duration)
+        {
+            float t = 0f;
+            Vector3 startScale = rootRect.localScale;
+            Vector3 peakScale = startScale * 1.08f;
+
+            while (t < duration)
             {
-                progressFillSprite = fill;
+                t += Time.deltaTime;
+                float n = Mathf.Clamp01(t / duration);
+                float pulse = Mathf.Sin(n * Mathf.PI);
+                rootRect.localScale = Vector3.Lerp(startScale, peakScale, pulse);
+
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = 1f;
+                }
+
+                if (fillImage != null)
+                {
+                    fillImage.color = Color.Lerp(Color.white, new Color(1f, 0.95f, 0.55f), pulse);
+                }
+
+                if (comboText != null)
+                {
+                    comboText.color = Color.Lerp(Color.white, new Color(1f, 0.85f, 0.2f), pulse);
+                }
+
+                yield return null;
             }
 
-            if (frameImage != null && progressFrameSprite != null)
+            rootRect.localScale = startScale;
+            if (fillImage != null)
             {
-                frameImage.sprite = progressFrameSprite;
-                frameImage.type = Image.Type.Simple;
-                frameImage.preserveAspect = true;
+                fillImage.color = Color.white;
             }
 
-            if (fillImage != null && progressFillSprite != null)
+            if (comboText != null)
             {
-                fillImage.sprite = progressFillSprite;
-                fillImage.type = Image.Type.Simple;
-                fillImage.preserveAspect = false;
+                comboText.color = Color.white;
             }
+
+            flashRoutine = null;
         }
 
         private void EnsureUiBuilt()
@@ -97,36 +149,37 @@ namespace ClawbearGames
                 return;
             }
 
+            ResolveSprites();
+
             Canvas canvas = FindOverlayCanvas();
-            rootRect = new GameObject("HoleLevelProgress", typeof(RectTransform)).GetComponent<RectTransform>();
+            rootRect = new GameObject("ComboBar", typeof(RectTransform), typeof(CanvasGroup)).GetComponent<RectTransform>();
             rootRect.SetParent(canvas.transform, false);
             rootRect.sizeDelta = rootSize;
             rootRect.anchorMin = new Vector2(0.5f, 0.5f);
             rootRect.anchorMax = new Vector2(0.5f, 0.5f);
             rootRect.pivot = new Vector2(0.5f, 0.5f);
+            canvasGroup = rootRect.GetComponent<CanvasGroup>();
 
-            ResolveProgressSprites();
-
-            RectTransform barRoot = new GameObject("ProgressBarRoot", typeof(RectTransform)).GetComponent<RectTransform>();
+            RectTransform barRoot = new GameObject("ComboBarRoot", typeof(RectTransform)).GetComponent<RectTransform>();
             barRoot.SetParent(rootRect, false);
-            barRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            barRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            barRoot.anchorMin = new Vector2(0f, 0.5f);
+            barRoot.anchorMax = new Vector2(1f, 0.5f);
             barRoot.pivot = new Vector2(0.5f, 0.5f);
-            barRoot.sizeDelta = new Vector2(rootSize.x, 28f);
-            barRoot.anchoredPosition = new Vector2(0f, 12f);
+            barRoot.offsetMin = new Vector2(0f, -14f);
+            barRoot.offsetMax = new Vector2(-46f, 14f);
 
-            RectTransform fillMask = new GameObject("ProgressFillMask", typeof(RectTransform), typeof(Image), typeof(RectMask2D)).GetComponent<RectTransform>();
+            RectTransform fillMask = new GameObject("ComboFillMask", typeof(RectTransform), typeof(Image), typeof(RectMask2D)).GetComponent<RectTransform>();
             fillMask.SetParent(barRoot, false);
             fillMask.anchorMin = Vector2.zero;
             fillMask.anchorMax = Vector2.one;
             fillMask.offsetMin = new Vector2(8f, 5f);
             fillMask.offsetMax = new Vector2(-8f, -5f);
-            Image fillMaskImage = fillMask.GetComponent<Image>();
-            fillMaskImage.sprite = GetWhiteSprite();
-            fillMaskImage.color = Color.black;
-            fillMaskImage.raycastTarget = false;
+            Image maskImage = fillMask.GetComponent<Image>();
+            maskImage.sprite = GetWhiteSprite();
+            maskImage.color = Color.black;
+            maskImage.raycastTarget = false;
 
-            fillRect = CreateImage("ProgressFill", fillMask, Color.white, progressFillSprite);
+            fillRect = CreateImage("ComboFill", fillMask, Color.white, fillSprite);
             fillRect.anchorMin = new Vector2(0f, 0f);
             fillRect.anchorMax = new Vector2(0f, 1f);
             fillRect.offsetMin = Vector2.zero;
@@ -136,35 +189,39 @@ namespace ClawbearGames
             fillImage.type = Image.Type.Simple;
             fillImage.raycastTarget = false;
 
-            RectTransform frameRect = CreateImage("ProgressFrame", barRoot, Color.white, progressFrameSprite);
+            RectTransform frameRect = CreateImage("ComboFrame", barRoot, Color.white, frameSprite);
             frameRect.anchorMin = Vector2.zero;
             frameRect.anchorMax = Vector2.one;
             frameRect.offsetMin = Vector2.zero;
             frameRect.offsetMax = Vector2.zero;
-            frameImage = frameRect.GetComponent<Image>();
+            Image frameImage = frameRect.GetComponent<Image>();
             frameImage.type = Image.Type.Simple;
+            frameImage.preserveAspect = true;
             frameImage.raycastTarget = false;
 
-            levelText = CreateText("LevelText", rootRect);
-            levelText.rectTransform.anchoredPosition = new Vector2(0f, -18f);
-            levelText.fontSize = 18;
-            levelText.text = "Hole Level 1";
-            levelText.raycastTarget = false;
+            comboText = CreateText("ComboText", rootRect);
+            comboText.rectTransform.anchorMin = new Vector2(1f, 0.5f);
+            comboText.rectTransform.anchorMax = new Vector2(1f, 0.5f);
+            comboText.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            comboText.rectTransform.anchoredPosition = new Vector2(-20f, 0f);
+            comboText.rectTransform.sizeDelta = new Vector2(52f, 40f);
+            comboText.fontSize = 24;
+            comboText.text = string.Empty;
+            comboText.raycastTarget = false;
 
-            ConfigureSprites(progressFrameSprite, progressFillSprite);
-            SetFillAmount(0f);
+            SetFill(0f);
         }
 
-        private void ResolveProgressSprites()
+        private void ResolveSprites()
         {
-            if (progressFillSprite == null)
+            if (fillSprite == null)
             {
-                progressFillSprite = TryLoadProgressSprite("progressbar_fill");
+                fillSprite = TryLoadProgressSprite("progressbar_fill_orange");
             }
 
-            if (progressFrameSprite == null)
+            if (frameSprite == null)
             {
-                progressFrameSprite = TryLoadProgressSprite("progressbar_frame");
+                frameSprite = TryLoadProgressSprite("progressbar_frame");
             }
         }
 
@@ -194,9 +251,9 @@ namespace ClawbearGames
                 }
             }
 
-            Canvas canvas = new GameObject("HoleProgressCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster)).GetComponent<Canvas>();
+            Canvas canvas = new GameObject("ComboCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster)).GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 200;
+            canvas.sortingOrder = 210;
 
             CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -224,9 +281,6 @@ namespace ClawbearGames
         {
             Text text = new GameObject(name, typeof(RectTransform), typeof(Text)).GetComponent<Text>();
             text.transform.SetParent(parent, false);
-            text.rectTransform.anchorMin = new Vector2(0f, 0.5f);
-            text.rectTransform.anchorMax = new Vector2(1f, 0.5f);
-            text.rectTransform.sizeDelta = new Vector2(0f, 30f);
             text.alignment = TextAnchor.MiddleCenter;
             text.color = Color.white;
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -244,17 +298,6 @@ namespace ClawbearGames
             Texture2D texture = Texture2D.whiteTexture;
             whiteSprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             return whiteSprite;
-        }
-
-        private void SetFillAmount(float normalized)
-        {
-            if (fillRect == null)
-            {
-                return;
-            }
-
-            float clamped = Mathf.Clamp01(normalized);
-            fillRect.anchorMax = new Vector2(clamped, 1f);
         }
     }
 }

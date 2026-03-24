@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 052e315e85f842b49541215c9a891a9b, type: 3}
+  m_Name: ComboConfig
+  m_EditorClassIdentifier: 
+  activationWindowSeconds: 5
+  activationScoreThreshold: 100
+  decayPointsPerSecond: 30
+  comboLevelThresholds:
+  - 100
+  - 200
+  - 300
+  uiScreenOffset: {x: 0, y: 145}
+  flashDuration: 0.2
