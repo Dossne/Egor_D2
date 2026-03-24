@@ -272,9 +272,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   activationWindowSeconds: 5
-  activationScoreThreshold: 30
-  decayPointsPerSecond: 10
-  comboLevelThresholds: 1e0000005a00000064000000c80000002c01000090010000
+  activationScoreThreshold: 5
+  decayPointsPerSecond: 1
+  comboLevelThresholds: 050000005a00000064000000c80000002c01000090010000
   flashDuration: 0.2
 --- !u!1 &705507993
 GameObject:
