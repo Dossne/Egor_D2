@@ -146,8 +146,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 256952ec573d6854799a1ea3227ece7a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   smoothTime: 0.15
   shakeDuration: 0.5
   shakeAmount: 0.25
@@ -272,8 +272,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
@@ -348,8 +348,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b5ed7cf7a6dc1c459cdde98ebf890f4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   testingLevel: 0
   reviveWaitTime: 5
   backgroundMusicClips:
@@ -391,8 +391,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 17a357f9b6c407f45b5d6bc726bf4b94, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   targetObjectExplodePrefab: {fileID: 5509961803046099209, guid: ad0add4e419bcea40bfeed4379e857c9, type: 3}
   cashEffectControllerPrefab: {fileID: 2657552082633870446, guid: 465e38caf5da89d42832fe4f1e8f4507, type: 3}
 --- !u!4 &1074983437
@@ -437,8 +437,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: da8f286282e80644490b9c239d2f5b92, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   groundTextures:
   - {fileID: 2800000, guid: 49730d9f5d504d34db6fdcee95709389, type: 3}
   - {fileID: 2800000, guid: 62dc1ac40f67b524c9bd598385289656, type: 3}
@@ -645,8 +645,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_Version: 3
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
@@ -823,6 +823,8 @@ GameObject:
   m_Component:
   - component: {fileID: 8919546715652102875}
   - component: {fileID: 2357358119012766210}
+  - component: {fileID: 2357358119012766211}
+  - component: {fileID: 2357358119012766212}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -5649,8 +5651,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dbc0bae8d28609c4b88e3505b7eb817a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   objectLayer: Object
   defaultLayer: Default
   holeParentTrans: {fileID: 6950448838709429298}
@@ -5666,6 +5668,43 @@ MonoBehaviour:
   levelProgressUI: {fileID: 0}
   progressFrameSprite: {fileID: 21300000, guid: 6654b3a577a0ea645b6a4340942e7fd2, type: 3}
   progressFillSprite: {fileID: 21300000, guid: 006ceb08f6b2ae540be05c5c799e9d47, type: 3}
+  comboController: {fileID: 2357358119012766211}
+--- !u!114 &2357358119012766211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1536752596607600981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 717fa92dcab0429497c5844a064e5a25, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  activationWindowSeconds: 5
+  activationScoreThreshold: 100
+  decayPointsPerSecond: 30
+  comboLevelThresholds:
+  - 100
+  - 200
+  - 300
+  flashDuration: 0.2
+--- !u!114 &2357358119012766212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1536752596607600981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fbef3843e19346e18a2299fe99c2c2e1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  screenOffset: {x: 0, y: 145}
+  rootSize: {x: 220, y: 62}
+  frameSprite: {fileID: 21300000, guid: 6654b3a577a0ea645b6a4340942e7fd2, type: 3}
+  fillSprite: {fileID: 21300000, guid: d2de1ef43ca0a574e8a32cef0338e486, type: 3}
 --- !u!199 &2576272778403676366
 ParticleSystemRenderer:
   serializedVersion: 6
@@ -40347,8 +40386,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cf6d4d9a0f7f438c8b355d9e0b6f2db8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   levels:
   - level: 1
     pointsSum: 0
