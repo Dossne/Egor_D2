@@ -78,6 +78,7 @@ namespace ClawbearGames
         private int totalPoints = 0;
         private int currentBalanceLevelIndex = -1;
         private Text pointsPopupText = null;
+        [SerializeField] private Vector3 pointsPopupWorldOffset = new Vector3(0f, 0.6f, 0f);
 
         private void OnEnable()
         {
@@ -160,6 +161,7 @@ namespace ClawbearGames
 
             CharacterInforController charControl = characters[selectedCharacterIndex];
             holeSpriteRenderer.sprite = charControl.HoleSprite;
+            holeSpriteRenderer.color = Color.black;
             DisableIdleHoleEffects();
 
             //Setup parameters and objects
@@ -589,17 +591,29 @@ namespace ClawbearGames
 
             float t = 0f;
             const float duration = 1f;
-            Vector2 startPos = new Vector2(Screen.width * 0.5f, Screen.height * 0.45f);
-            Vector2 endPos = startPos + Vector2.up * 60f;
             Color color = pointsPopupText.color;
             color.a = 1f;
             pointsPopupText.color = color;
+            Camera cameraRef = Camera.main;
 
             while (t < duration)
             {
                 t += Time.deltaTime;
                 float normalized = Mathf.Clamp01(t / duration);
-                popupRect.position = Vector2.Lerp(startPos, endPos, normalized);
+
+                if (cameraRef == null)
+                {
+                    cameraRef = Camera.main;
+                }
+
+                if (cameraRef != null)
+                {
+                    Vector3 worldPos = transform.position + pointsPopupWorldOffset + Vector3.up * (normalized * 0.8f);
+                    Vector3 screenPos = cameraRef.WorldToScreenPoint(worldPos);
+                    popupRect.position = screenPos;
+                    pointsPopupText.enabled = screenPos.z > 0f;
+                }
+
                 color.a = (normalized < 0.75f) ? 1f : Mathf.Lerp(1f, 0f, (normalized - 0.75f) / 0.25f);
                 pointsPopupText.color = color;
                 yield return null;
