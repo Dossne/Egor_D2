@@ -6,6 +6,14 @@ namespace ClawbearGames
 {
     public class PlayerComboController : MonoBehaviour
     {
+        private enum ComboUiEvent
+        {
+            IdleUpdate,
+            Show,
+            LevelUp,
+            Hide
+        }
+
         [Header("Combo Gameplay")]
         [SerializeField][Min(0.1f)] private float activationWindowSeconds = 5f;
         [SerializeField][Min(1)] private int activationScoreThreshold = 100;
@@ -39,7 +47,7 @@ namespace ClawbearGames
         {
             EnsureValidConfig();
             EnsureView();
-            RefreshUi(false);
+            RefreshUi(ComboUiEvent.Hide);
         }
 
         public int EvaluateBonusForPickup(int basePoints)
@@ -65,7 +73,7 @@ namespace ClawbearGames
             TrimWindow(now);
 
             bool wasActive = isActive;
-            int prevLevel = comboLevel;
+            int previousLevel = comboLevel;
 
             if (!isActive)
             {
@@ -82,10 +90,8 @@ namespace ClawbearGames
             }
 
             UpdateComboLevel();
-
-            bool firstActivation = !wasActive && isActive;
-            bool levelIncreased = comboLevel > prevLevel;
-            RefreshUi(firstActivation || levelIncreased);
+            ComboUiEvent uiEvent = ResolveUiEvent(wasActive, isActive, previousLevel, comboLevel);
+            RefreshUi(uiEvent);
         }
 
         private void Update()
@@ -94,7 +100,7 @@ namespace ClawbearGames
             TrimWindow(now);
 
             bool wasActive = isActive;
-            int prevLevel = comboLevel;
+            int previousLevel = comboLevel;
 
             if (!isActive)
             {
@@ -117,10 +123,8 @@ namespace ClawbearGames
             }
 
             UpdateComboLevel();
-
-            bool firstActivation = !wasActive && isActive;
-            bool levelIncreased = comboLevel > prevLevel;
-            RefreshUi(firstActivation || levelIncreased);
+            ComboUiEvent uiEvent = ResolveUiEvent(wasActive, isActive, previousLevel, comboLevel);
+            RefreshUi(uiEvent);
         }
 
         private void OnValidate()
@@ -150,6 +154,26 @@ namespace ClawbearGames
                     comboLevelThresholds[i] = comboLevelThresholds[i - 1];
                 }
             }
+        }
+
+        private ComboUiEvent ResolveUiEvent(bool wasActive, bool activeNow, int previousLevel, int levelNow)
+        {
+            if (!wasActive && activeNow)
+            {
+                return ComboUiEvent.Show;
+            }
+
+            if (wasActive && !activeNow)
+            {
+                return ComboUiEvent.Hide;
+            }
+
+            if (activeNow && levelNow > previousLevel)
+            {
+                return ComboUiEvent.LevelUp;
+            }
+
+            return ComboUiEvent.IdleUpdate;
         }
 
         private void TrimWindow(float now)
@@ -210,7 +234,7 @@ namespace ClawbearGames
             return Mathf.Max(1, activationScoreThreshold);
         }
 
-        private void RefreshUi(bool playFlash)
+        private void RefreshUi(ComboUiEvent uiEvent)
         {
             EnsureView();
             if (comboBarView == null)
@@ -218,19 +242,32 @@ namespace ClawbearGames
                 return;
             }
 
-            bool shouldBeVisible = comboWasActivated && comboPoints > 0f;
-            comboBarView.SetVisible(shouldBeVisible);
-            comboBarView.SetLevel(comboLevel);
-
             float fillCap = GetFillCapPoints();
             float fillAmount = fillCap > 0f ? Mathf.Clamp01(comboPoints / fillCap) : 0f;
-            comboBarView.SetFill(fillAmount);
 
-            if (playFlash)
+            switch (uiEvent)
             {
-                comboBarView.PlayFlash(flashDuration);
+                case ComboUiEvent.Show:
+                    comboBarView.PlayShow(comboLevel, fillAmount, flashDuration);
+                    break;
+                case ComboUiEvent.LevelUp:
+                    comboBarView.PlayLevelUp(comboLevel, fillAmount, flashDuration);
+                    break;
+                case ComboUiEvent.Hide:
+                    comboBarView.PlayHide();
+                    break;
+                default:
+                    bool shouldBeVisible = comboWasActivated && comboPoints > 0f;
+                    if (shouldBeVisible)
+                    {
+                        comboBarView.ApplyIdleUpdate(comboLevel, fillAmount);
+                    }
+                    else
+                    {
+                        comboBarView.ApplyIdleUpdate(0, 0f);
+                    }
+                    break;
             }
-
         }
 
         private void EnsureView()
