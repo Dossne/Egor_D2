@@ -416,6 +416,17 @@ namespace ClawbearGames
             targetHoleSize = Mathf.Clamp(targetHoleSize + amount, 1f, 100f);
         }
 
+        public Transform GetHoleVisualTransform()
+        {
+            return holeParentTrans != null ? holeParentTrans : transform;
+        }
+
+        public float GetHoleWorldRadius()
+        {
+            Transform holeTransform = GetHoleVisualTransform();
+            return Mathf.Max(holeTransform.lossyScale.x, holeTransform.lossyScale.z) * 0.5f;
+        }
+
         /// <summary>
         /// Handle score and growth when a target object is consumed.
         /// </summary>
