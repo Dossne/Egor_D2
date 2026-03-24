@@ -90,7 +90,7 @@ namespace ClawbearGames
                     ViewManager.Instance.IngameViewController.RemoveTargetObjectDot(this);
                     IngameManager.Instance.OnPlayerAteTargetObject();
 
-                    int pointsAmount = Random.Range(minCashRewardAmount, maxCashRewardAmount + 1);
+                    int pointsAmount = GetPointsRewardAmount();
                     PlayerController.Instance.OnTargetObjectConsumed(pointsAmount);
 
                     physicsPullCount = 0;
@@ -113,6 +113,24 @@ namespace ClawbearGames
                 ViewManager.Instance.IngameViewController.UpdateTargetObjectPos(this);
                 yield return new WaitForSeconds(0.1f);
             }
+        }
+
+        private int GetPointsRewardAmount()
+        {
+            if (!string.IsNullOrEmpty(objectName))
+            {
+                if (objectName.IndexOf("Ball", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return 1;
+                }
+
+                if (objectName.IndexOf("Hat", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return 4;
+                }
+            }
+
+            return Random.Range(minCashRewardAmount, maxCashRewardAmount + 1);
         }
     }
 }

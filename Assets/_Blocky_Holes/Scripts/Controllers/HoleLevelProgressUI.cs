@@ -8,11 +8,13 @@ namespace ClawbearGames
         [SerializeField] private Vector3 worldOffset = Vector3.zero;
         [SerializeField] private Vector2 screenOffset = new Vector2(0f, -90f);
         [SerializeField] private Vector2 rootSize = new Vector2(220f, 50f);
+        [SerializeField] private string roundedProgressSpriteName = "Slider";
 
         private Camera targetCamera;
         private RectTransform rootRect;
         private Text levelText;
         private Image fillImage;
+        private static Sprite roundedProgressSprite;
         private static Sprite whiteSprite;
 
         private void Awake()
@@ -77,11 +79,14 @@ namespace ClawbearGames
             rootRect.anchorMax = new Vector2(0.5f, 0.5f);
             rootRect.pivot = new Vector2(0.5f, 0.5f);
 
-            RectTransform bg = CreateImage("ProgressBg", rootRect, new Color(0f, 0f, 0f, 0.45f));
+            Sprite progressSprite = GetRoundedProgressSprite(roundedProgressSpriteName);
+            RectTransform bg = CreateImage("ProgressBg", rootRect, new Color(0.07f, 0.07f, 0.07f, 0.9f), progressSprite);
             bg.sizeDelta = new Vector2(rootSize.x, 18f);
             bg.anchoredPosition = new Vector2(0f, -13f);
+            Image backgroundImage = bg.GetComponent<Image>();
+            backgroundImage.type = progressSprite != null ? Image.Type.Sliced : Image.Type.Simple;
 
-            RectTransform fill = CreateImage("ProgressFill", bg, new Color(0.2f, 0.88f, 0.24f, 1f));
+            RectTransform fill = CreateImage("ProgressFill", bg, new Color(0.26f, 0.95f, 0.22f, 1f), progressSprite);
             fillImage = fill.GetComponent<Image>();
             fillImage.type = Image.Type.Filled;
             fillImage.fillMethod = Image.FillMethod.Horizontal;
@@ -117,7 +122,7 @@ namespace ClawbearGames
             return canvas;
         }
 
-        private static RectTransform CreateImage(string name, RectTransform parent, Color color)
+        private static RectTransform CreateImage(string name, RectTransform parent, Color color, Sprite sprite = null)
         {
             Image image = new GameObject(name, typeof(RectTransform), typeof(Image)).GetComponent<Image>();
             image.transform.SetParent(parent, false);
@@ -125,7 +130,7 @@ namespace ClawbearGames
             image.rectTransform.anchorMax = new Vector2(1f, 1f);
             image.rectTransform.offsetMin = Vector2.zero;
             image.rectTransform.offsetMax = Vector2.zero;
-            image.sprite = GetWhiteSprite();
+            image.sprite = sprite != null ? sprite : GetWhiteSprite();
             image.color = color;
             return image.rectTransform;
         }
@@ -154,6 +159,31 @@ namespace ClawbearGames
             Texture2D texture = Texture2D.whiteTexture;
             whiteSprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             return whiteSprite;
+        }
+
+        private static Sprite GetRoundedProgressSprite(string spriteName)
+        {
+            if (roundedProgressSprite != null)
+            {
+                return roundedProgressSprite;
+            }
+
+            if (string.IsNullOrEmpty(spriteName))
+            {
+                return null;
+            }
+
+            Sprite[] loadedSprites = Resources.FindObjectsOfTypeAll<Sprite>();
+            for (int i = 0; i < loadedSprites.Length; i++)
+            {
+                if (loadedSprites[i] != null && loadedSprites[i].name == spriteName)
+                {
+                    roundedProgressSprite = loadedSprites[i];
+                    break;
+                }
+            }
+
+            return roundedProgressSprite;
         }
     }
 }
