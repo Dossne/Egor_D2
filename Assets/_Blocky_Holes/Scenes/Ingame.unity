@@ -40353,89 +40353,89 @@ MonoBehaviour:
     pointsToNext: 10
     heroScale: 1
     heroMoveSpeed: 0.9
-    cameraY: 3.2
-    cameraZ: -1.5
+    cameraY: 5.2
+    cameraZ: -3.2
   - level: 2
     pointsSum: 10
     pointsToNext: 20
     heroScale: 1.4
     heroMoveSpeed: 1.1
-    cameraY: 4
-    cameraZ: -1.85
+    cameraY: 6
+    cameraZ: -3.55
   - level: 3
     pointsSum: 30
     pointsToNext: 100
     heroScale: 1.9
     heroMoveSpeed: 1.25
-    cameraY: 4.5
-    cameraZ: -2.1
+    cameraY: 6.5
+    cameraZ: -3.8
   - level: 4
     pointsSum: 130
     pointsToNext: 200
     heroScale: 2.45
     heroMoveSpeed: 1.45
-    cameraY: 5.5
-    cameraZ: -2.55
+    cameraY: 7.5
+    cameraZ: -4.25
   - level: 5
     pointsSum: 330
     pointsToNext: 300
     heroScale: 2.9
     heroMoveSpeed: 1.75
-    cameraY: 6
-    cameraZ: -2.8
+    cameraY: 8
+    cameraZ: -4.5
   - level: 6
     pointsSum: 630
     pointsToNext: 400
     heroScale: 3.3
     heroMoveSpeed: 2
-    cameraY: 6.5
-    cameraZ: -3
+    cameraY: 8.5
+    cameraZ: -4.7
   - level: 7
     pointsSum: 1030
     pointsToNext: 500
     heroScale: 3.75
     heroMoveSpeed: 2.2
-    cameraY: 7
-    cameraZ: -3.25
+    cameraY: 9
+    cameraZ: -4.95
   - level: 8
     pointsSum: 1530
     pointsToNext: 600
     heroScale: 4.2
     heroMoveSpeed: 2.4
-    cameraY: 7.5
-    cameraZ: -3.5
+    cameraY: 9.5
+    cameraZ: -5.2
   - level: 9
     pointsSum: 2130
     pointsToNext: 700
     heroScale: 4.8
     heroMoveSpeed: 2.6
-    cameraY: 8.5
-    cameraZ: -4
+    cameraY: 10.5
+    cameraZ: -5.7
   - level: 10
     pointsSum: 2830
     pointsToNext: 800
     heroScale: 5.5
     heroMoveSpeed: 2.8
-    cameraY: 9.5
-    cameraZ: -4.5
+    cameraY: 11.5
+    cameraZ: -6.2
   - level: 11
     pointsSum: 3630
     pointsToNext: 900
     heroScale: 5.9
     heroMoveSpeed: 3
-    cameraY: 10
-    cameraZ: -4.75
+    cameraY: 12
+    cameraZ: -6.45
   - level: 12
     pointsSum: 4530
     pointsToNext: 1000
     heroScale: 6.3
     heroMoveSpeed: 3.2
-    cameraY: 10.5
-    cameraZ: -5
+    cameraY: 12.5
+    cameraZ: -6.7
   - level: 13
     pointsSum: 5530
     pointsToNext: 1000
     heroScale: 6.7
     heroMoveSpeed: 3.4
-    cameraY: 11
-    cameraZ: -5.25
+    cameraY: 13
+    cameraZ: -6.95
