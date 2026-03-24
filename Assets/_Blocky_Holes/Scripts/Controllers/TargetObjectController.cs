@@ -9,7 +9,6 @@ namespace ClawbearGames
         [SerializeField] private float radiusIncreaseAmount = 0.1f;
         [SerializeField][Range(1, 50)] private int minCashRewardAmount = 1;
         [SerializeField][Range(1, 50)] private int maxCashRewardAmount = 1;
-        [SerializeField][Range(0f, 1f)] private float cashRewardFrequency = 0.5f;
 
         [Header("Target Object References")]
         [SerializeField] private string objectName = string.Empty;
@@ -88,16 +87,11 @@ namespace ClawbearGames
 
                     //Update the player
                     ServicesManager.Instance.SoundManager.PlaySound(ServicesManager.Instance.SoundManager.TargetObjectDestroyed);
-                    PlayerController.Instance.UpdateHoleSize(radiusIncreaseAmount);
                     ViewManager.Instance.IngameViewController.RemoveTargetObjectDot(this);
                     IngameManager.Instance.OnPlayerAteTargetObject();
 
-                    //Create cash effect
-                    if (Random.value <= cashRewardFrequency)
-                    {
-                        int cashAmount = Random.Range(minCashRewardAmount, maxCashRewardAmount);
-                        PlayerController.Instance.CreateCashEffect(cashAmount);
-                    }
+                    int pointsAmount = Random.Range(minCashRewardAmount, maxCashRewardAmount + 1);
+                    PlayerController.Instance.OnTargetObjectConsumed(pointsAmount);
 
                     physicsPullCount = 0;
                     gameObject.SetActive(false); 

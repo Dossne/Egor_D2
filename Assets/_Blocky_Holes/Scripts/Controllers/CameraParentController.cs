@@ -64,10 +64,9 @@ namespace ClawbearGames
         /// Update the distance of the camera based on hole size.
         /// </summary>
         /// <param name="holeSize"></param>
-        public void UpdateDistance(float holeSize)
+        public void UpdateDistance(float cameraY, float cameraZ)
         {
-            float addedDis = Mathf.Clamp((holeSize - 1f) * 4f, 0f, 100f);
-            Vector3 newPos = new Vector3(cameraLocalPos.x, cameraLocalPos.y + addedDis, cameraLocalPos.z - addedDis);
+            Vector3 newPos = new Vector3(cameraLocalPos.x, cameraY, cameraZ);
             cameraTrans.localPosition = newPos;
         }
 
