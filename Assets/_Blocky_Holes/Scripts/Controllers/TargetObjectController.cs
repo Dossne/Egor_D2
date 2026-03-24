@@ -143,6 +143,16 @@ namespace ClawbearGames
                 {
                     return 4;
                 }
+
+                if (objectName.IndexOf("Car", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return 10;
+                }
+
+                if (objectName.IndexOf("House", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return 25;
+                }
             }
 
             return Random.Range(minCashRewardAmount, maxCashRewardAmount + 1);
