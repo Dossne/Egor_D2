@@ -23,6 +23,7 @@ namespace ClawbearGames
         [SerializeField] private ParticleSystem[] holeFireEffects = null;
         [SerializeField][Range(0.1f, 1f)] private float holeDetectionRadiusMultiplier = 0.75f;
         [SerializeField] private HoleBalanceConfig holeBalanceConfig = null;
+        [SerializeField] private HoleBalanceHierarchyConfig holeBalanceHierarchyConfig = null;
         [SerializeField] private HoleLevelProgressUI levelProgressUI = null;
         [SerializeField] private HoleBalanceLevel[] fallbackHoleBalanceLevels = new HoleBalanceLevel[]
         {
@@ -341,6 +342,11 @@ namespace ClawbearGames
 
         private int GetBalanceLevelIndexByPoints(int points)
         {
+            if (holeBalanceHierarchyConfig != null && holeBalanceHierarchyConfig.HasLevels)
+            {
+                return holeBalanceHierarchyConfig.GetLevelIndexByPoints(points);
+            }
+
             if (holeBalanceConfig != null)
             {
                 return holeBalanceConfig.GetLevelIndexByPoints(points);
@@ -391,6 +397,11 @@ namespace ClawbearGames
 
         private HoleBalanceLevel GetBalanceLevelByIndex(int levelIndex)
         {
+            if (holeBalanceHierarchyConfig != null && holeBalanceHierarchyConfig.HasLevels)
+            {
+                return holeBalanceHierarchyConfig.GetLevelByIndex(levelIndex);
+            }
+
             if (holeBalanceConfig != null)
             {
                 return holeBalanceConfig.GetLevelByIndex(levelIndex);
