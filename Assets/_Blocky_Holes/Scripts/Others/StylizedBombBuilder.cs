@@ -51,6 +51,12 @@ namespace ClawbearGames
         [ContextMenu("Rebuild Bomb")]
         public void Rebuild()
         {
+#if UNITY_EDITOR
+            if (ShouldSkipEditorRebuild())
+            {
+                return;
+            }
+#endif
             TryAssignDefaultMaterial();
 
             Transform visualRoot = GetOrCreateVisualRoot();
@@ -60,6 +66,18 @@ namespace ClawbearGames
             CreateSpikes(visualRoot);
             CreateFuse(visualRoot);
         }
+
+#if UNITY_EDITOR
+        private bool ShouldSkipEditorRebuild()
+        {
+            if (Application.isPlaying)
+            {
+                return false;
+            }
+
+            return PrefabUtility.IsPartOfPrefabAsset(gameObject);
+        }
+#endif
 
         private Transform GetOrCreateVisualRoot()
         {
