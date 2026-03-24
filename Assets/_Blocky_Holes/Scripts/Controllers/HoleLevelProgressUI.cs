@@ -7,7 +7,7 @@ namespace ClawbearGames
     {
         [SerializeField] private Vector3 worldOffset = Vector3.zero;
         [SerializeField] private Vector2 screenOffset = new Vector2(0f, -140f);
-        [SerializeField] private Vector2 rootSize = new Vector2(300f, 88f);
+        [SerializeField] private Vector2 rootSize = new Vector2(420f, 122f);
         [SerializeField] private Sprite progressFillSprite = null;
         [SerializeField] private Sprite progressFrameSprite = null;
         
@@ -112,8 +112,8 @@ namespace ClawbearGames
             barRoot.anchorMin = new Vector2(0.5f, 0.5f);
             barRoot.anchorMax = new Vector2(0.5f, 0.5f);
             barRoot.pivot = new Vector2(0.5f, 0.5f);
-            barRoot.sizeDelta = new Vector2(rootSize.x, 40f);
-            barRoot.anchoredPosition = new Vector2(0f, 18f);
+            barRoot.sizeDelta = new Vector2(rootSize.x, 58f);
+            barRoot.anchoredPosition = new Vector2(0f, 24f);
 
             RectTransform fillMask = new GameObject("ProgressFillMask", typeof(RectTransform), typeof(Image), typeof(RectMask2D)).GetComponent<RectTransform>();
             fillMask.SetParent(barRoot, false);
@@ -146,8 +146,9 @@ namespace ClawbearGames
             frameImage.raycastTarget = false;
 
             levelText = CreateText("LevelText", rootRect);
-            levelText.rectTransform.anchoredPosition = new Vector2(0f, -24f);
-            levelText.fontSize = 18;
+            levelText.rectTransform.anchoredPosition = new Vector2(0f, -38f);
+            levelText.rectTransform.sizeDelta = new Vector2(0f, 42f);
+            levelText.fontSize = 28;
             levelText.text = "Hole Level 1";
             levelText.raycastTarget = false;
 
