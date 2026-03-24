@@ -695,7 +695,7 @@ namespace ClawbearGames
             Text popupText = popupObject.GetComponent<Text>();
             popupText.alignment = TextAnchor.MiddleCenter;
             popupText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            popupText.fontSize = 42;
+            popupText.fontSize = 56;
             popupText.fontStyle = FontStyle.Bold;
             popupText.color = Color.white;
             popupText.raycastTarget = false;

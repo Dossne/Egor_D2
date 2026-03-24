@@ -6,10 +6,14 @@ namespace ClawbearGames
 {
     public class HoleLevelProgressUI : MonoBehaviour
     {
+        private static HoleLevelProgressUI activeInstance;
+
         [SerializeField] private Vector3 worldOffset = Vector3.zero;
         [SerializeField] private Vector2 screenOffset = Vector2.zero;
         [SerializeField][Min(0f)] private float holeRadiusOffsetMultiplier = 1.1f;
-        [SerializeField][Min(0f)] private float edgePadding = 6f;
+        [SerializeField][Min(0f)] private float edgePadding = 8f;
+        [SerializeField][Min(0f)] private float holeGap = 16f;
+        [SerializeField][Min(0f)] private float rootTopClearance = 54f;
         [SerializeField] private Vector2 rootSize = new Vector2(420f, 122f);
         [SerializeField] private Sprite progressFillSprite = null;
         [SerializeField] private Sprite progressFrameSprite = null;
@@ -30,7 +34,22 @@ namespace ClawbearGames
 
         private void Awake()
         {
+            if (activeInstance != null && activeInstance != this)
+            {
+                Destroy(this);
+                return;
+            }
+
+            activeInstance = this;
             EnsureUiBuilt();
+        }
+
+        private void OnDestroy()
+        {
+            if (activeInstance == this)
+            {
+                activeInstance = null;
+            }
         }
 
         private void LateUpdate()
@@ -58,7 +77,7 @@ namespace ClawbearGames
             }
 
             rootRect.gameObject.SetActive(true);
-            float dynamicYOffset = (CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier) + edgePadding;
+            float dynamicYOffset = (CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier) + edgePadding + holeGap + rootTopClearance;
             Vector3 finalOffset = (Vector3)screenOffset + Vector3.down * dynamicYOffset;
             rootRect.position = screenPoint + finalOffset;
         }
