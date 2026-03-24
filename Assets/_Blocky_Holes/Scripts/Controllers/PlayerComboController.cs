@@ -234,6 +234,11 @@ namespace ClawbearGames
         {
             if (comboBarView == null)
             {
+                comboBarView = GetComponent<ComboBarView>();
+            }
+
+            if (comboBarView == null)
+            {
                 comboBarView = GetComponentInChildren<ComboBarView>(true);
             }
 
@@ -241,6 +246,17 @@ namespace ClawbearGames
             {
                 comboBarView = gameObject.AddComponent<ComboBarView>();
             }
+
+            ComboBarView[] allViews = GetComponentsInChildren<ComboBarView>(true);
+            for (int i = 0; i < allViews.Length; i++)
+            {
+                if (allViews[i] != comboBarView)
+                {
+                    allViews[i].enabled = false;
+                }
+            }
+
+            comboBarView.Configure(comboConfig);
         }
 
         private float GetActivationWindowSeconds()
