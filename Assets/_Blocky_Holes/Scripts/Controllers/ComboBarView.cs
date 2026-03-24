@@ -10,7 +10,9 @@ namespace ClawbearGames
         [SerializeField] private Vector2 screenOffset = Vector2.zero;
         [SerializeField] private Vector2 rootSize = new Vector2(420f, 122f);
         [SerializeField][Min(0f)] private float holeRadiusOffsetMultiplier = 1.1f;
-        [SerializeField][Min(0f)] private float edgePadding = 6f;
+        [SerializeField][Min(0f)] private float edgePadding = 8f;
+        [SerializeField][Min(0f)] private float holeGap = 16f;
+        [SerializeField][Min(0f)] private float rootBottomClearance = 6f;
 
         [Header("Sprites")]
         [SerializeField] private Sprite frameSprite;
@@ -435,7 +437,7 @@ namespace ClawbearGames
                 canvasGroup.alpha = 1f;
             }
 
-            float dynamicYOffset = (CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier) + edgePadding;
+            float dynamicYOffset = (CalculateHoleScreenRadius(targetCamera) * holeRadiusOffsetMultiplier) + edgePadding + holeGap + rootBottomClearance;
             Vector3 finalOffset = (Vector3)screenOffset + Vector3.up * dynamicYOffset;
             rootRect.position = screenPoint + finalOffset;
         }
