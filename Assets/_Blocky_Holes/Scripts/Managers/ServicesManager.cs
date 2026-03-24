@@ -33,7 +33,51 @@ namespace ClawbearGames
             else
             {
                 Instance = this;
+                ResolveMissingReferences();
                 DontDestroyOnLoad(gameObject);
+            }
+        }
+
+        private void ResolveMissingReferences()
+        {
+            if (adManager == null)
+            {
+                adManager = GetComponentInChildren<AdManager>(true);
+            }
+
+            if (soundManager == null)
+            {
+                soundManager = GetComponentInChildren<SoundManager>(true);
+            }
+
+            if (coinManager == null)
+            {
+                coinManager = GetComponentInChildren<CoinManager>(true);
+            }
+
+            if (shareManager == null)
+            {
+                shareManager = GetComponentInChildren<ShareManager>(true);
+            }
+
+            if (dailyRewardManager == null)
+            {
+                dailyRewardManager = GetComponentInChildren<DailyRewardManager>(true);
+            }
+
+            if (leaderboardManager == null)
+            {
+                leaderboardManager = GetComponentInChildren<LeaderboardManager>(true);
+            }
+
+            if (notificationManager == null)
+            {
+                notificationManager = GetComponentInChildren<NotificationManager>(true);
+            }
+
+            if (characterContainer == null)
+            {
+                characterContainer = GetComponentInChildren<CharacterContainer>(true);
             }
         }
     }
