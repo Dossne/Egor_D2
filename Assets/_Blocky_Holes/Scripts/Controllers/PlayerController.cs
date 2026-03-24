@@ -30,7 +30,7 @@ namespace ClawbearGames
         [SerializeField] private Sprite progressFrameSprite = null;
         [SerializeField] private Sprite progressFillSprite = null;
         [SerializeField] private PlayerComboController comboController = null;
-        [SerializeField][Range(0.1f, 1f)] private float holeCenterFillScale = 0.68f;
+        [SerializeField][Range(0.1f, 1f)] private float holeCenterFillScale = 0.72f;
         [Header("Joystick")]
         [SerializeField] private CanvasGroup joystickCanvasGroup = null;
         [SerializeField] private RectTransform joystickRoot = null;
@@ -653,7 +653,7 @@ namespace ClawbearGames
 
             fillTransform.localPosition = new Vector3(0f, 0f, 0.001f);
             fillTransform.localRotation = Quaternion.identity;
-            fillTransform.localScale = Vector3.one * Mathf.Clamp01(holeCenterFillScale);
+            fillTransform.localScale = Vector3.one * Mathf.Clamp(holeCenterFillScale, 0.1f, 1f);
 
             fillRenderer.sprite = GetOrCreateHoleCenterFillSprite();
             fillRenderer.color = Color.black;
@@ -673,7 +673,7 @@ namespace ClawbearGames
             const int textureSize = 256;
             Texture2D texture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false);
             texture.name = "HoleCenterFillTexture";
-            texture.filterMode = FilterMode.Bilinear;
+            texture.filterMode = FilterMode.Point;
             texture.wrapMode = TextureWrapMode.Clamp;
 
             float radius = (textureSize - 2) * 0.5f;

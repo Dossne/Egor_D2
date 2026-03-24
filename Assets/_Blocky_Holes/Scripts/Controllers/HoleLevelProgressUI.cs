@@ -12,7 +12,7 @@ namespace ClawbearGames
         [SerializeField] private Vector2 screenOffset = Vector2.zero;
         [SerializeField][Min(0f)] private float holeRadiusOffsetMultiplier = 1.1f;
         [SerializeField][Min(0f)] private float edgePadding = 8f;
-        [SerializeField][Min(0f)] private float holeGap = 24f;
+        [SerializeField][Min(0f)] private float holeGap = 32f;
         [SerializeField][Min(0f)] private float rootTopClearance = 54f;
         [SerializeField] private Vector2 rootSize = new Vector2(420f, 122f);
         [SerializeField] private Sprite progressFillSprite = null;
