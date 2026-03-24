@@ -7,7 +7,9 @@ namespace ClawbearGames
     {
         [SerializeField] private Vector3 worldOffset = Vector3.zero;
         [SerializeField] private Vector2 screenOffset = new Vector2(0f, -90f);
-        [SerializeField] private Vector2 rootSize = new Vector2(220f, 50f);
+        [SerializeField] private Vector2 rootSize = new Vector2(190f, 42f);
+        [SerializeField] private Sprite progressFillSprite = null;
+        [SerializeField] private Sprite progressFrameSprite = null;
         
         private Camera targetCamera;
         private RectTransform rootRect;
@@ -78,23 +80,52 @@ namespace ClawbearGames
             rootRect.anchorMax = new Vector2(0.5f, 0.5f);
             rootRect.pivot = new Vector2(0.5f, 0.5f);
 
-            Sprite progressSprite = GetRoundedProgressSprite();
-            RectTransform bg = CreateImage("ProgressBg", rootRect, new Color(0.07f, 0.07f, 0.07f, 0.9f), progressSprite);
-            bg.sizeDelta = new Vector2(rootSize.x, 18f);
-            bg.anchoredPosition = new Vector2(0f, -13f);
-            Image backgroundImage = bg.GetComponent<Image>();
-            backgroundImage.type = progressSprite != null ? Image.Type.Sliced : Image.Type.Simple;
+            ResolveProgressSprites();
 
-            RectTransform fill = CreateImage("ProgressFill", bg, new Color(0.26f, 0.95f, 0.22f, 1f), progressSprite);
+            RectTransform bg = CreateImage("ProgressBg", rootRect, Color.white, progressFrameSprite);
+            bg.sizeDelta = new Vector2(rootSize.x, 14f);
+            bg.anchoredPosition = new Vector2(0f, -10f);
+            Image backgroundImage = bg.GetComponent<Image>();
+            backgroundImage.type = progressFrameSprite != null ? Image.Type.Sliced : Image.Type.Simple;
+
+            RectTransform fill = CreateImage("ProgressFill", bg, Color.white, progressFillSprite);
             fillImage = fill.GetComponent<Image>();
             fillImage.type = Image.Type.Filled;
             fillImage.fillMethod = Image.FillMethod.Horizontal;
             fillImage.fillAmount = 0f;
 
             levelText = CreateText("LevelText", rootRect);
-            levelText.rectTransform.anchoredPosition = new Vector2(0f, 13f);
-            levelText.fontSize = 24;
+            levelText.rectTransform.anchoredPosition = new Vector2(0f, 11f);
+            levelText.fontSize = 20;
             levelText.text = "Масштаб 1";
+        }
+
+        private void ResolveProgressSprites()
+        {
+            if (progressFillSprite == null)
+            {
+                progressFillSprite = TryLoadProgressSprite("progressbar_fill");
+            }
+
+            if (progressFrameSprite == null)
+            {
+                progressFrameSprite = TryLoadProgressSprite("progressbar_frame");
+            }
+        }
+
+        private static Sprite TryLoadProgressSprite(string spriteName)
+        {
+            Sprite sprite = Resources.Load<Sprite>(spriteName);
+            if (sprite != null)
+            {
+                return sprite;
+            }
+
+#if UNITY_EDITOR
+            const string basePath = "Assets/_Blocky_Holes/Sprites/UI/Progressbar/";
+            sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>($"{basePath}{spriteName}.png");
+#endif
+            return sprite;
         }
 
         private Canvas FindOverlayCanvas()

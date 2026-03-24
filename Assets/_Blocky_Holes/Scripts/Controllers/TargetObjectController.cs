@@ -27,6 +27,14 @@ namespace ClawbearGames
         }
         private Coroutine cRCheckFall = null;
         private int physicsPullCount = 0;
+        private bool isFallingIntoHole = false;
+
+        private void OnEnable()
+        {
+            isFallingIntoHole = false;
+            cRCheckFall = null;
+            physicsPullCount = 0;
+        }
 
 
         /// <summary>
@@ -35,6 +43,7 @@ namespace ClawbearGames
         /// <param name="objectLayer"></param>
         public void OnEnterPlayer(string objectLayer)
         {
+            isFallingIntoHole = true;
             gameObject.layer = LayerMask.NameToLayer(objectLayer);
             rigidbody3D.WakeUp();
 
@@ -66,6 +75,11 @@ namespace ClawbearGames
         /// <param name="defaultLayer"></param>
         public void OnExitPlayer(string defaultLayer)
         {
+            if (isFallingIntoHole)
+            {
+                return;
+            }
+
             cRCheckFall = null;
             physicsPullCount = 0;
             gameObject.layer = LayerMask.NameToLayer(defaultLayer);
