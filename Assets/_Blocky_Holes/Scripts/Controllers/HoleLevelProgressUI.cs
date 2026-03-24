@@ -8,8 +8,7 @@ namespace ClawbearGames
         [SerializeField] private Vector3 worldOffset = Vector3.zero;
         [SerializeField] private Vector2 screenOffset = new Vector2(0f, -90f);
         [SerializeField] private Vector2 rootSize = new Vector2(220f, 50f);
-        [SerializeField] private string roundedProgressSpriteName = "Slider";
-
+        
         private Camera targetCamera;
         private RectTransform rootRect;
         private Text levelText;
@@ -79,7 +78,7 @@ namespace ClawbearGames
             rootRect.anchorMax = new Vector2(0.5f, 0.5f);
             rootRect.pivot = new Vector2(0.5f, 0.5f);
 
-            Sprite progressSprite = GetRoundedProgressSprite(roundedProgressSpriteName);
+            Sprite progressSprite = GetRoundedProgressSprite();
             RectTransform bg = CreateImage("ProgressBg", rootRect, new Color(0.07f, 0.07f, 0.07f, 0.9f), progressSprite);
             bg.sizeDelta = new Vector2(rootSize.x, 18f);
             bg.anchoredPosition = new Vector2(0f, -13f);
@@ -161,28 +160,45 @@ namespace ClawbearGames
             return whiteSprite;
         }
 
-        private static Sprite GetRoundedProgressSprite(string spriteName)
+        private static Sprite GetRoundedProgressSprite()
         {
             if (roundedProgressSprite != null)
             {
                 return roundedProgressSprite;
             }
 
-            if (string.IsNullOrEmpty(spriteName))
-            {
-                return null;
-            }
+            const int width = 128;
+            const int height = 32;
+            const int radius = 16;
+            Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            texture.name = "HoleProgressRounded";
+            texture.filterMode = FilterMode.Bilinear;
+            texture.wrapMode = TextureWrapMode.Clamp;
 
-            Sprite[] loadedSprites = Resources.FindObjectsOfTypeAll<Sprite>();
-            for (int i = 0; i < loadedSprites.Length; i++)
+            Color32[] pixels = new Color32[width * height];
+            Color32 opaque = new Color32(255, 255, 255, 255);
+            Color32 transparent = new Color32(255, 255, 255, 0);
+
+            for (int y = 0; y < height; y++)
             {
-                if (loadedSprites[i] != null && loadedSprites[i].name == spriteName)
+                for (int x = 0; x < width; x++)
                 {
-                    roundedProgressSprite = loadedSprites[i];
-                    break;
+                    bool inMiddle = x >= radius && x < width - radius;
+
+                    float leftDx = x - (radius - 0.5f);
+                    float rightDx = x - (width - radius - 0.5f);
+                    float dy = y - (height * 0.5f - 0.5f);
+                    bool inLeftCap = x < radius && (leftDx * leftDx + dy * dy) <= radius * radius;
+                    bool inRightCap = x >= width - radius && (rightDx * rightDx + dy * dy) <= radius * radius;
+
+                    pixels[y * width + x] = (inMiddle || inLeftCap || inRightCap) ? opaque : transparent;
                 }
             }
 
+            texture.SetPixels32(pixels);
+            texture.Apply();
+
+            roundedProgressSprite = Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 100f);
             return roundedProgressSprite;
         }
     }
