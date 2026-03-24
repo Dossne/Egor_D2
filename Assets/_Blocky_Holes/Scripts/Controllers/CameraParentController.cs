@@ -57,6 +57,7 @@ namespace ClawbearGames
                 Vector3 targetPos = PlayerController.Instance.transform.position + offset;
                 targetPos.y = transform.position.y;
                 transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref velocity, smoothTime);
+                UpdateCameraLookAtPlayer();
             }
         }
 
@@ -70,6 +71,17 @@ namespace ClawbearGames
         {
             Vector3 newPos = new Vector3(cameraLocalPos.x, cameraY, cameraZ);
             cameraTrans.localPosition = newPos;
+            UpdateCameraLookAtPlayer();
+        }
+
+        private void UpdateCameraLookAtPlayer()
+        {
+            if (cameraTrans == null || PlayerController.Instance == null)
+            {
+                return;
+            }
+
+            cameraTrans.LookAt(PlayerController.Instance.transform.position);
         }
 
 
