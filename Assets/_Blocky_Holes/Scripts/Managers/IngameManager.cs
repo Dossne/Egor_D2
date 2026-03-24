@@ -48,6 +48,7 @@ namespace ClawbearGames
         private AudioClip backgroundMusic = null;
         private LevelData levelData = null;
         private int currentObject = 0;
+        private int targetObjectsToComplete = 0;
 
         private void Awake()
         {
@@ -95,6 +96,7 @@ namespace ClawbearGames
             levelData = JsonUtility.FromJson<LevelData>(textAsset.ToString());
 
             //Load other parameters
+            targetObjectsToComplete = levelData != null && levelData.ListTargetObjectData != null ? levelData.ListTargetObjectData.Count : 0;
             groundMaterial.SetTexture("_Main_Texture", PoolManager.Instance.GetGroundTexture(levelData.GroundTexture));
             backgroundMusic = backgroundMusicClips[Random.Range(0, backgroundMusicClips.Length)];
             PlayerController.Instance.SetMovementSpeed(levelData.PlayerMovementSpeed);
@@ -157,7 +159,7 @@ namespace ClawbearGames
                     ViewManager.Instance.IngameViewController.CreateDeadlyObjectDot(deadlyObject);
                 }
 
-                ViewManager.Instance.IngameViewController.UpdateObjectTexts(currentObject, levelData.TargetObjectAmount);
+                ViewManager.Instance.IngameViewController.UpdateObjectTexts(currentObject, targetObjectsToComplete);
                 StartCoroutine(CRCountdownTime());
             }
         }
@@ -319,8 +321,8 @@ namespace ClawbearGames
         public void OnPlayerAteTargetObject()
         {
             currentObject++;
-            ViewManager.Instance.IngameViewController.UpdateObjectTexts(currentObject, levelData.TargetObjectAmount);
-            if (currentObject >= levelData.TargetObjectAmount && ingameState != IngameState.Ingame_CompleteLevel)
+            ViewManager.Instance.IngameViewController.UpdateObjectTexts(currentObject, targetObjectsToComplete);
+            if (currentObject >= targetObjectsToComplete && ingameState != IngameState.Ingame_CompleteLevel)
             {
                 CompletedLevel();
             }

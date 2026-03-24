@@ -29,7 +29,6 @@ namespace ClawbearGames
         [SerializeField] private HoleLevelProgressUI levelProgressUI = null;
         [SerializeField] private Sprite progressFrameSprite = null;
         [SerializeField] private Sprite progressFillSprite = null;
-        [SerializeField] private ComboConfig comboConfig = null;
         [SerializeField] private PlayerComboController comboController = null;
         [Header("Joystick")]
         [SerializeField] private CanvasGroup joystickCanvasGroup = null;
@@ -568,12 +567,7 @@ namespace ClawbearGames
                 comboController = gameObject.AddComponent<PlayerComboController>();
             }
 
-            if (comboConfig == null)
-            {
-                comboConfig = Resources.Load<ComboConfig>("Configs/ComboConfig");
-            }
-
-            comboController.Setup(comboConfig);
+            comboController.Setup();
         }
 
         private void EnsureHoleCenterIsBlack()
