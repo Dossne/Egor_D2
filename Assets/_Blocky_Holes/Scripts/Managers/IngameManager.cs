@@ -71,6 +71,13 @@ namespace ClawbearGames
         private void Start()
         {
             Application.targetFrameRate = 60;
+            if (ServicesManager.Instance == null || ServicesManager.Instance.CoinManager == null)
+            {
+                Debug.LogError("IngameManager: ServicesManager or CoinManager is not assigned in scene.");
+                enabled = false;
+                return;
+            }
+
             ServicesManager.Instance.CoinManager.SetCollectedCoins(0);
             StartCoroutine(CRShowViewWithDelay(ViewType.INGAME_VIEW, 0f));
 

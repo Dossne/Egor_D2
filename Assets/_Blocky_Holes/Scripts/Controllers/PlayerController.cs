@@ -134,7 +134,30 @@ namespace ClawbearGames
             //Add other actions here
 
             //Setup character
-            CharacterInforController charControl = ServicesManager.Instance.CharacterContainer.CharacterInforControllers[ServicesManager.Instance.CharacterContainer.SelectedCharacterIndex];
+            if (ServicesManager.Instance == null || ServicesManager.Instance.CharacterContainer == null)
+            {
+                Debug.LogError("PlayerController: ServicesManager or CharacterContainer is not assigned in scene.");
+                enabled = false;
+                return;
+            }
+
+            CharacterInforController[] characters = ServicesManager.Instance.CharacterContainer.CharacterInforControllers;
+            if (characters == null || characters.Length == 0)
+            {
+                Debug.LogError("PlayerController: CharacterContainer has no characters assigned.");
+                enabled = false;
+                return;
+            }
+
+            int selectedCharacterIndex = ServicesManager.Instance.CharacterContainer.SelectedCharacterIndex;
+            if (selectedCharacterIndex < 0 || selectedCharacterIndex >= characters.Length)
+            {
+                Debug.LogError($"PlayerController: Selected character index {selectedCharacterIndex} is out of range.");
+                enabled = false;
+                return;
+            }
+
+            CharacterInforController charControl = characters[selectedCharacterIndex];
             holeSpriteRenderer.sprite = charControl.HoleSprite;
             DisableIdleHoleEffects();
 
