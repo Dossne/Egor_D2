@@ -24,6 +24,22 @@ namespace ClawbearGames
         [SerializeField][Range(0.1f, 1f)] private float holeDetectionRadiusMultiplier = 0.75f;
         [SerializeField] private HoleBalanceConfig holeBalanceConfig = null;
         [SerializeField] private HoleLevelProgressUI levelProgressUI = null;
+        [SerializeField] private HoleBalanceLevel[] fallbackHoleBalanceLevels = new HoleBalanceLevel[]
+        {
+            new HoleBalanceLevel(1, 0, 10, 1f, 0.9f, 3.2f, -1.5f),
+            new HoleBalanceLevel(2, 10, 20, 1.4f, 1.1f, 4f, -1.85f),
+            new HoleBalanceLevel(3, 30, 100, 1.9f, 1.25f, 4.5f, -2.1f),
+            new HoleBalanceLevel(4, 130, 200, 2.45f, 1.45f, 5.5f, -2.55f),
+            new HoleBalanceLevel(5, 330, 300, 2.9f, 1.75f, 6f, -2.8f),
+            new HoleBalanceLevel(6, 630, 400, 3.3f, 2f, 6.5f, -3f),
+            new HoleBalanceLevel(7, 1030, 500, 3.75f, 2.2f, 7f, -3.25f),
+            new HoleBalanceLevel(8, 1530, 600, 4.2f, 2.4f, 7.5f, -3.5f),
+            new HoleBalanceLevel(9, 2130, 700, 4.8f, 2.6f, 8.5f, -4f),
+            new HoleBalanceLevel(10, 2830, 800, 5.5f, 2.8f, 9.5f, -4.5f),
+            new HoleBalanceLevel(11, 3630, 900, 5.9f, 3f, 10f, -4.75f),
+            new HoleBalanceLevel(12, 4530, 1000, 6.3f, 3.2f, 10.5f, -5f),
+            new HoleBalanceLevel(13, 5530, 1000, 6.7f, 3.4f, 11f, -5.25f),
+        };
 
 
         public PlayerState PlayerState
@@ -115,14 +131,6 @@ namespace ClawbearGames
             //Setup parameters and objects
             isStopControl = true;
             EnsureLevelProgressUI();
-
-            if (!HasValidBalanceConfig())
-            {
-                Debug.LogError("HoleBalanceConfig is missing or empty on PlayerController.", this);
-                enabled = false;
-                return;
-            }
-
             ApplyBalanceByPoints();
         }
 
@@ -334,17 +342,67 @@ namespace ClawbearGames
 
         private int GetBalanceLevelIndexByPoints(int points)
         {
-            return holeBalanceConfig.GetLevelIndexByPoints(points);
+            if (holeBalanceConfig != null)
+            {
+                return holeBalanceConfig.GetLevelIndexByPoints(points);
+            }
+
+            int result = 0;
+            for (int i = 0; i < fallbackHoleBalanceLevels.Length; i++)
+            {
+                if (points >= fallbackHoleBalanceLevels[i].PointsSum)
+                {
+                    result = i;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            levelProgressUI = GetComponentInChildren<HoleLevelProgressUI>(true);
+            if (levelProgressUI == null)
+            {
+                levelProgressUI = gameObject.AddComponent<HoleLevelProgressUI>();
+            }
+        }
+
+        private Vector3 ClampPositionInsideScreen(Vector3 desiredPosition, float holeRadius)
+        {
+            Camera cameraRef = Camera.main;
+            if (cameraRef == null)
+            {
+                return desiredPosition;
+            }
+
+            Vector3 viewport = cameraRef.WorldToViewportPoint(desiredPosition);
+            Vector3 viewportRight = cameraRef.WorldToViewportPoint(desiredPosition + cameraRef.transform.right * holeRadius);
+            Vector3 viewportUp = cameraRef.WorldToViewportPoint(desiredPosition + cameraRef.transform.up * holeRadius);
+
+            float viewportRadiusX = Mathf.Abs(viewportRight.x - viewport.x);
+            float viewportRadiusY = Mathf.Abs(viewportUp.y - viewport.y);
+
+            float clampedX = Mathf.Clamp(viewport.x, viewportRadiusX, 1f - viewportRadiusX);
+            float clampedY = Mathf.Clamp(viewport.y, viewportRadiusY, 1f - viewportRadiusY);
+            Ray ray = cameraRef.ViewportPointToRay(new Vector3(clampedX, clampedY, 0f));
+            Plane movePlane = new Plane(Vector3.up, new Vector3(0f, desiredPosition.y, 0f));
+            if (movePlane.Raycast(ray, out float enterDistance))
+            {
+                return ray.GetPoint(enterDistance);
+            }
+
+            return desiredPosition;
         }
 
         private HoleBalanceLevel GetBalanceLevelByIndex(int levelIndex)
         {
-            return holeBalanceConfig.GetLevelByIndex(levelIndex);
-        }
+            if (holeBalanceConfig != null)
+            {
+                return holeBalanceConfig.GetLevelByIndex(levelIndex);
+            }
 
-        private bool HasValidBalanceConfig()
-        {
-            return holeBalanceConfig != null && holeBalanceConfig.Levels != null && holeBalanceConfig.Levels.Length > 0;
+            levelIndex = Mathf.Clamp(levelIndex, 0, fallbackHoleBalanceLevels.Length - 1);
+            return fallbackHoleBalanceLevels[levelIndex];
         }
 
         private void UpdateLevelProgressUi(int levelIndex)
