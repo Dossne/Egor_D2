@@ -161,7 +161,8 @@ namespace ClawbearGames
 
             CharacterInforController charControl = characters[selectedCharacterIndex];
             holeSpriteRenderer.sprite = charControl.HoleSprite;
-            holeSpriteRenderer.color = Color.black;
+            // Preserve the character hole sprite colors (e.g. blue ring skins) instead of forcing black tint.
+            holeSpriteRenderer.color = Color.white;
             DisableIdleHoleEffects();
 
             //Setup parameters and objects
